@@ -19,4 +19,4 @@ Run script from terminal specifying path to the .xyz file:
 ### Coming soon:
 
 - [ ] More compete support of various atom types.
-- [ ] Visualizetion of normal modes from quantum chemistry calculations.
+- [ ] Visualization of normal modes from quantum chemistry calculations.
