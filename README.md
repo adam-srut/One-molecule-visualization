@@ -6,7 +6,7 @@ Publication/presentation 2D plots of moderately size molecules can be easily cre
 Script requires compiled Julia with packages: ArgParse, Interact, Luxor, Colors and Blink.
 Run script from terminal specifying path to the .xyz file:
 ```
- $ ./one_mol_vis.jl -f /path/to/molecule.xyz 
+ $ ./one_mol_vis.jl /path/to/molecule.xyz 
  ```
  Interactive window will appear which allows you rotate and resize your molecule.
  Molecule plot is automaticaly saved in working directory every time you change the orientation.
