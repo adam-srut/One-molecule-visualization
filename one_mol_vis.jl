@@ -19,7 +19,7 @@ using ArgParse
 function parse_commandline()
     s = ArgParseSettings()
     @add_arg_table s begin
-        "--xyz", "-f"
+        "xyz"
             help = "Path to the .xyz file"
             arg_type = String
             required = true
@@ -28,7 +28,7 @@ function parse_commandline()
             arg_type = Int
             default = 8
         "--output_format", "-o"
-            help = "Specify output format"
+			help = "Specify output format [svg::Default, png]"
             arg_type = String
             default = "svg"
     end
@@ -37,6 +37,14 @@ end
 
 args = parse_commandline()
 xyzfile = args["xyz"]
+filename = split(xyzfile, '/')[end]
+if filename[end-3:end] == ".xyz"
+	basename = filename[1:end-4]
+else
+	println("File does not have an .xyz ending")
+	println("Please check the file name.")
+	basename = "one_mol_vis"
+end
 bond_thickness = args["bond_thickness"]
 out_format = args["output_format"]
 
@@ -100,14 +108,14 @@ function make_plot(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, 
     pov = [ r*cosd(ϕ)*sind(θ), r*sind(ϕ)*sind(θ), r*cosd(θ) ]
     rotM = [[ cosd(rotate), -sind(rotate)];; [sind(rotate), cosd(rotate)]]
     # Initiate drawing:
-    drawing = Drawing(600, 600, "one_mol_vis." * out_format)
+    drawing = Drawing(600, 600, "$basename.$out_format")
     origin()
     # Prepare points coordinates:
     point_coors = map( p -> create_point(p,r,ϕ,θ), eachrow(xyzs))
     point_coors = map( p -> rotM'*p, point_coors)
     dists = map( x -> norm(x-pov), eachrow(xyzs))
     points = map(p -> Point(p...), point_coors.*(dists*1.5))
-    # Draw a skelet from bond:
+    # Draw a skelet from bonds:
     for i in eachindex(points)
         for j in eachindex(points)
             if j >= i
@@ -158,6 +166,7 @@ end
 
 
 w = Window()
+title(w::Window, "One molecule visualiation")
 body!(w, one_mol)
 
 while active(w)
