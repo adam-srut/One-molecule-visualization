@@ -24,7 +24,7 @@ function parse_commandline()
         "--bond_thickness", "-b"
             help = "Specify bond thickness"
             arg_type = Int
-            default = 8
+            default = 4
         "--output_format", "-o"
 			help = "Specify output format [svg::Default, png]"
             arg_type = String
@@ -58,7 +58,7 @@ end
 
 
 using Interact, Colors, Luxor, Blink
-using LinearAlgebra
+using LinearAlgebra, Printf
 
 #==============================================================================
             Function section:
@@ -112,6 +112,7 @@ function orcaHess_reader(filename::String)
                 break
             end
         end
+		readline(file)
         #dof = parse(Int, split(readline(file))[1])
         C = Matrix{Float64}(undef, dof, dof)
         i_block = 1
@@ -131,7 +132,7 @@ function orcaHess_reader(filename::String)
     end
 end
 
-function create_point(xyz, r::Int, ϕ::Float64, θ::Float64)
+function create_point(xyz, ϕ::Float64, θ::Float64)
     #= Return point coordinates of [x,y,z] point in orthographic projection.
         Point of View in polar coordinates has to be specified.
     =#
@@ -147,9 +148,9 @@ function create_point(xyz, r::Int, ϕ::Float64, θ::Float64)
 end
 
 function disp_coors(xyzs::Array, Cmat::Matrix{Float64}, q::Int)
-	n = length(xyzs)
-	disp_vecs = reshape(Cmat[6+q,:], (n,3))
-	disp_points = xyzs + disp_vecs
+	n = length(eachrow(xyzs))
+	disp_vecs = reshape(Cmat[6+q,:], (3,n))'
+	disp_points = xyzs + disp_vecs*2.2
 	return disp_points
 end
 
@@ -168,10 +169,10 @@ function make_plot(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, 
     drawing = Drawing(600, 600, "$basename.$out_format")
     origin()
     # Prepare points coordinates:
-    point_coors = map( p -> create_point(p,r,ϕ,θ), eachrow(xyzs))
+    point_coors = map( p -> create_point(p*50, ϕ, θ), eachrow(xyzs))
     point_coors = map( p -> rotM'*p, point_coors)
     dists = map( x -> norm(x-pov), eachrow(xyzs))
-    points = map(p -> Point(p...), point_coors.*(dists*1.5))
+	points = map(p -> Point(p...), point_coors*r/25) #.*(dists*1.5))
     # Draw a skelet from bonds:
     for i in eachindex(points)
         for j in eachindex(points)
@@ -209,23 +210,21 @@ function make_plot(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, 
     return drawing
 end
 
-function make_plot2(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, rotate::Float64, q::Int)
+function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate::Float64, q::Int)
     #= Creates a drawing with Luxor package, that is saved as "one_mol_vis.svg".
         Atom types as Array{String} and xyz coordinates Matrix{Float64} has to be supplied.
         Point of View in polar coordinates is also required.
     =#
-    global bond_thickness
-    global out_format
-    pov = [ r*cosd(ϕ)*sind(θ), r*sind(ϕ)*sind(θ), r*cosd(θ) ]
+    pov = [ cosd(ϕ)*sind(θ), sind(ϕ)*sind(θ), cosd(θ) ]*20
     rotM = [[ cosd(rotate), -sind(rotate)];; [sind(rotate), cosd(rotate)]]
     # Initiate drawing:
-    drawing = Drawing(600, 600, "$basename.$out_format")
+    drawing = Drawing(400, 400, "$basename.$out_format")
     origin()
     # Prepare points coordinates:
-    point_coors = map( p -> create_point(p,r,ϕ,θ), eachrow(xyzs))
+    point_coors = map( p -> create_point(p*40, ϕ, θ), eachrow(xyzs))
     point_coors = map( p -> rotM'*p, point_coors)
     dists = map( x -> norm(x-pov), eachrow(xyzs))
-    points = map(p -> Point(p...), point_coors.*(dists*1.5))
+    points = map(p -> Point(p...), point_coors)
     # Draw a skelet from bonds:
     for i in eachindex(points)
         for j in eachindex(points)
@@ -249,12 +248,25 @@ function make_plot2(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64,
     for atom in to_plot
         name = atom[1]
         setcolor("black")
-        circle(atom[2],  10, :fill)
-        fontsize(12 + (r*0.2))
+        circle(atom[2],  2, :fill)
+        fontsize(12)
         fontface("Sans")
-        text(name, atom[2], halign=:right, valign=:top)
+        label(name, :NE, atom[2], offset=10)
     end
-	arr_head_xyz = map( p -> create_point(p,r,ϕ,θ), eachrow(disp_coors(xyzs, C, q))) 
+	disps = disp_coors(xyzs, C, q)*40
+	dists2 = map( x -> norm(x), eachrow(reshape(C[q+6,:],(3,length(atoms)))') )
+	arr_heads = map( p -> create_point(p, ϕ, θ), eachrow(disps))
+	arr_heads = map( p -> rotM'*p, arr_heads)
+	#arr_heads = map( (p, d) -> p*(40), arr_heads, dists2)
+	arr_heads = map( p -> Point(p...), arr_heads)
+	for (i, f, cnorm) in zip(points, arr_heads, dists2)
+		setcolor("azure3")
+		arrow(i, f, arrowheadlength=22*cnorm, linewidth=2)
+	end
+	setcolor("azure3")
+	freq = @sprintf "%.2f cm⁻¹" freqs[q+6]
+	fontsize(14)
+	text(freq, Point(0,180), halign=:center, valign=:bottom)
     finish()
     preview()
     return drawing
@@ -270,10 +282,19 @@ if norm_mode
 end
 
 # Create an interactive object:
-one_mol = @manipulate for r in 10:40, ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360
+if ! norm_mode
+	one_mol = @manipulate for r in 10:40, ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360
 
-    make_plot( xyzs, atoms, r, ϕ, θ, rotate )
+    	make_plot( xyzs, atoms, r, ϕ, θ, rotate )
 
+	end
+else
+	one_mol = @manipulate for 
+			 ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360, q in 1:(length(atoms)*3-6)
+
+        make_plot2( xyzs, atoms, ϕ, θ, rotate, q )
+
+    end
 end
 
 # Open a window with visualization:
