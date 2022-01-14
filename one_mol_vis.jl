@@ -242,6 +242,19 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
             end
         end
     end
+	disps = disp_coors(xyzs, C, q)*40
+	dists2 = map( x -> norm(x), eachrow(reshape(C[q+6,:],(3,length(atoms)))') )
+	arr_heads = map( p -> create_point(p, ϕ, θ), eachrow(disps))
+	arr_heads = map( p -> rotM'*p, arr_heads)
+	#arr_heads = map( (p, d) -> p*(40), arr_heads, dists2)
+	arr_heads = map( p -> Point(p...), arr_heads)
+	for (i, f, cnorm) in zip(points, arr_heads, dists2)
+		if cnorm < 0.1
+			continue
+		end
+		setcolor("azure4")
+		arrow(i, f, arrowheadlength=22*cnorm, linewidth=2)
+	end
     # Order atoms by their distatce to pov and plot as labeled circles
     to_plot = map( (atom, point, dist) -> (atom, point, dist), atoms, points, dists)
     sort!(to_plot, by = x -> x[3])
@@ -253,17 +266,7 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
         fontface("Sans")
         label(name, :NE, atom[2], offset=10)
     end
-	disps = disp_coors(xyzs, C, q)*40
-	dists2 = map( x -> norm(x), eachrow(reshape(C[q+6,:],(3,length(atoms)))') )
-	arr_heads = map( p -> create_point(p, ϕ, θ), eachrow(disps))
-	arr_heads = map( p -> rotM'*p, arr_heads)
-	#arr_heads = map( (p, d) -> p*(40), arr_heads, dists2)
-	arr_heads = map( p -> Point(p...), arr_heads)
-	for (i, f, cnorm) in zip(points, arr_heads, dists2)
-		setcolor("azure3")
-		arrow(i, f, arrowheadlength=22*cnorm, linewidth=2)
-	end
-	setcolor("azure3")
+	setcolor("azure4")
 	freq = @sprintf "%.2f cm⁻¹" freqs[q+6]
 	fontsize(14)
 	text(freq, Point(0,180), halign=:center, valign=:bottom)
