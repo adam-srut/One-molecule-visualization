@@ -20,4 +20,6 @@ Run script from terminal specifying path to the .xyz file:
 ### Coming soon:
 
 - [ ] More complete support of various atom types.
-- [ ] Visualization of normal modes from quantum chemistry calculations.
+- [x] Visualization of normal modes from quantum chemistry calculations. 
+    - [x] Support for Orca calculations.
+    - [ ] Support for Turbomole calculations.
