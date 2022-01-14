@@ -3,7 +3,7 @@
 Script for visualization of small molecules.
 
 
-Publication/presentation 2D plots of moderately size molecules can be easily created from .xyz files.
+Publication quality 2D plots of moderately size molecules can be easily created from .xyz files.
 Script requires compiled Julia with packages: ArgParse, Interact, Luxor, Colors and Blink.
 Run script from terminal specifying path to the .xyz file:
 ```
