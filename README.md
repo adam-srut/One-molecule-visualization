@@ -9,7 +9,7 @@ Run script from terminal specifying path to the .xyz file:
 ```
  $ ./one_mol_vis.jl /path/to/molecule.xyz 
  ```
- Interactive window will appear which allows you rotate and resize your molecule.
+ Interactive window will appear which allows you to rotate and resize your molecule.
  Molecule plot is automaticaly saved in working directory every time you change the orientation.
  Output format can be specified with option `-o [png, Default: svg]` (pdf format might cause some issues).
  Try `$ one_mol_vis.jl --help` to list all options.
