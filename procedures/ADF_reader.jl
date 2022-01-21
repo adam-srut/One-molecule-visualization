@@ -1,6 +1,6 @@
 #!/usr/bin/env julia
 
-f = "/home/adam/work/shared_ruthenium_stratocaster/frq_benzene.1094055.out"
+#f = "/home/adam/work/shared_ruthenium_stratocaster/frq_benzene.1094055.out"
 
 function ADF_reader(filepath::String)
 	#= Reads ADF output file with frequency calculation.
@@ -72,4 +72,4 @@ function ADF_reader(filepath::String)
 	end
 end
 
-xyzs, atoms, freqs, C = ADF_reader(f)
+#xyzs, atoms, freqs, C = ADF_reader(f)

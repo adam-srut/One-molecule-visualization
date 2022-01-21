@@ -12,22 +12,22 @@ function parse_commandline()
         "xyz"
             help = "Path to the .xyz file"
             arg_type = String
-			default = "dummy"
+            default = "dummy"
             #required = true
         "--bond_thickness", "-b"
             help = "Specify bond thickness"
             arg_type = Int
             default = 4
         "--output_format", "-o"
-			help = "Specify output format [svg::Default, png]"
+            help = "Specify output format [svg::Default, png]"
             arg_type = String
             default = "svg"
-		"--normal_modes", "-n"
-			help = "Path to orca.hess file."
-			arg_type = String
-		"--adf"
-			help = "ADF outfile with freq. calc. (no .xyz file is needed)"
-			arg_type = String
+        "--normal_modes", "-n"
+            help = "Path to orca.hess file."
+            arg_type = String
+        "--adf"
+            help = "ADF outfile with freq. calc. (no .xyz file is needed)"
+            arg_type = String
     end
     return parse_args(s)
 end
@@ -36,27 +36,27 @@ args = parse_commandline()
 xyzfile = args["xyz"]
 filename = split(xyzfile, '/')[end]
 if filename[end-3:end] == ".xyz"
-	basename = filename[1:end-4]
+    basename = filename[1:end-4]
 else
-	println("File does not have an .xyz ending")
-	println("Please check the file name.")
-	basename = "one_mol_vis"
+    println("File does not have an .xyz ending")
+    println("Please check the file name.")
+    basename = "one_mol_vis"
 end
 bond_thickness = args["bond_thickness"]
 out_format = args["output_format"]
 
 if args["normal_modes"] == nothing
-	norm_mode = false
-	if args["adf"] != nothing
-		adf_out = args["adf"]
-		adf = true
-		bond_thickness = 2
-		norm_mode = true
-	end
+    norm_mode = false
+    if args["adf"] != nothing
+        adf_out = args["adf"]
+        adf = true
+        bond_thickness = 2
+        norm_mode = true
+    end
 else
-	norm_mode = true
-	NM_file = args["normal_modes"]
-	bond_thickness = 2
+    norm_mode = true
+    NM_file = args["normal_modes"]
+    bond_thickness = 2
 end
 
 #==============================================================================
@@ -95,10 +95,10 @@ function create_point(xyz, ϕ::Float64, θ::Float64)
 end
 
 function disp_coors(xyzs::Array, Cmat::Matrix{Float64}, q::Int)
-	n = length(eachrow(xyzs))
-	disp_vecs = reshape(Cmat[6+q,:], (3,n))'
-	disp_points = xyzs + disp_vecs*2.2
-	return disp_points
+    n = length(eachrow(xyzs))
+    disp_vecs = reshape(Cmat[6+q,:], (3,n))'
+    disp_points = xyzs + disp_vecs*2.2
+    return disp_points
 end
 
 
@@ -119,7 +119,7 @@ function make_plot(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, 
     point_coors = map( p -> create_point(p*50, ϕ, θ), eachrow(xyzs))
     point_coors = map( p -> rotM'*p, point_coors)
     dists = map( x -> norm(x-pov), eachrow(xyzs))
-	points = map(p -> Point(p...), point_coors*r/25) #.*(dists*1.5))
+    points = map(p -> Point(p...), point_coors*r/25) #.*(dists*1.5))
     # Draw a skelet from bonds:
     for i in eachindex(points)
         for j in eachindex(points)
@@ -189,18 +189,18 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
             end
         end
     end
-	disps = disp_coors(xyzs, C, q)*40
-	norms = map( x -> norm(x), eachrow(reshape(C[q+6,:],(3,length(atoms)))') )
-	arr_heads = map( p -> create_point(p, ϕ, θ), eachrow(disps))
-	arr_heads = map( p -> rotM'*p, arr_heads)
-	arr_heads = map( p -> Point(p...), arr_heads)
-	for (i, f, cnorm) in zip(points, arr_heads, norms)
-		if cnorm < 0.1
-			continue
-		end
-		setcolor("azure4")
-		arrow(i, f, arrowheadlength=22*cnorm, linewidth=2)
-	end
+    disps = disp_coors(xyzs, C, q)*40
+    norms = map( x -> norm(x), eachrow(reshape(C[q+6,:],(3,length(atoms)))') )
+    arr_heads = map( p -> create_point(p, ϕ, θ), eachrow(disps))
+    arr_heads = map( p -> rotM'*p, arr_heads)
+    arr_heads = map( p -> Point(p...), arr_heads)
+    for (i, f, cnorm) in zip(points, arr_heads, norms)
+        if cnorm < 0.1
+            continue
+        end
+        setcolor("azure4")
+        arrow(i, f, arrowheadlength=22*cnorm, linewidth=2)
+    end
     # Order atoms by their distatce to pov and plot as labeled circles
     to_plot = map( (atom, point, dist) -> (atom, point, dist), atoms, points, dists)
     sort!(to_plot, by = x -> x[3])
@@ -212,10 +212,10 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
         fontface("Sans")
         label(name, :NE, atom[2], offset=10)
     end
-	setcolor("azure4")
-	freq = @sprintf "%.2f cm⁻¹" freqs[q+6]
-	fontsize(14)
-	text(freq, Point(0,180), halign=:center, valign=:bottom)
+    setcolor("azure4")
+    freq = @sprintf "%.2f cm⁻¹" freqs[q+6]
+    fontsize(14)
+    text(freq, Point(0,180), halign=:center, valign=:bottom)
     finish()
     preview()
     return drawing
@@ -225,25 +225,25 @@ end
 ==============================================================================#
 
 if adf
-	xyzs, atoms, freqs, C = ADF_reader(adf_out)
+    xyzs, atoms, freqs, C = ADF_reader(adf_out)
 else
-	xyzs, atoms = xyz_reader(xyzfile)
+    xyzs, atoms = xyz_reader(xyzfile)
 
-	if norm_mode
-		(freqs, C) = orcaHess_reader(NM_file)
-	end
+    if norm_mode
+        (freqs, C) = orcaHess_reader(NM_file)
+    end
 end
 
 # Create an interactive object:
 if ! norm_mode
-	one_mol = @manipulate for r in 10:40, ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360
+    one_mol = @manipulate for r in 10:40, ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360
 
-    	make_plot( xyzs, atoms, r, ϕ, θ, rotate )
+        make_plot( xyzs, atoms, r, ϕ, θ, rotate )
 
-	end
+    end
 else
-	one_mol = @manipulate for 
-			 ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360, q in 1:(length(atoms)*3-6)
+    one_mol = @manipulate for 
+             ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360, q in 1:(length(atoms)*3-6)
 
         make_plot2( xyzs, atoms, ϕ, θ, rotate, q )
 
