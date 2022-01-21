@@ -1,18 +1,10 @@
 #! /usr/bin/env julia
 
-colors = Dict(
-    "N" => "blue",
-    "O" => "red",
-    "H" => "gray",
-    "C" => "cyan",
-	"Cl" => "yellow",
-	"S" => "orange"
-)
-radii = Dict(
-    "N" => 1.1,	"O" => 1.1,	 "H" => 0.8,
-	"C" => 1.0,	"Cl" => 1.5, "S" => 1.2 
-)
 
+
+#==============================================================================
+            Argument parsing:
+==============================================================================#
 using ArgParse
 function parse_commandline()
     s = ArgParseSettings()
@@ -20,7 +12,8 @@ function parse_commandline()
         "xyz"
             help = "Path to the .xyz file"
             arg_type = String
-            required = true
+			default = "dummy"
+            #required = true
         "--bond_thickness", "-b"
             help = "Specify bond thickness"
             arg_type = Int
@@ -31,6 +24,9 @@ function parse_commandline()
             default = "svg"
 		"--normal_modes", "-n"
 			help = "Path to orca.hess file."
+			arg_type = String
+		"--adf"
+			help = "ADF outfile with freq. calc. (no .xyz file is needed)"
 			arg_type = String
     end
     return parse_args(s)
@@ -48,15 +44,34 @@ else
 end
 bond_thickness = args["bond_thickness"]
 out_format = args["output_format"]
+
 if args["normal_modes"] == nothing
 	norm_mode = false
+	if args["adf"] != nothing
+		adf_out = args["adf"]
+		adf = true
+		bond_thickness = 2
+		norm_mode = true
+	end
 else
 	norm_mode = true
 	NM_file = args["normal_modes"]
 	bond_thickness = 2
 end
 
+#==============================================================================
+            Load procedures:
+==============================================================================#
 
+# Load file readers:
+include("./procedures/ADF_reader.jl")
+include("./procedures/xyz_reader.jl")
+include("./procedures/ORCA-hess_reader.jl")
+
+# Load dictionaries with atomic types:
+include("./atom_types.jl")
+
+# Load essential modules:
 using Interact, Colors, Luxor, Blink
 using LinearAlgebra, Printf
 
@@ -64,76 +79,8 @@ using LinearAlgebra, Printf
             Function section:
 ==============================================================================#
 
-function xyz_reader(filename::String)
-	#= XYZ reader. Takes path to .xyz file as an input.
-	Returns tuple ( coors, atom ):
-		- coors is a N×3 matrix of atomic coordinates.
-		- atoms is a N vector with atomic types.
-	=#
-    open(filename) do file
-        n = parse(Int,readline(file))
-        coors = Matrix{Float64}(undef,n,3)
-        atoms = Array{String}(undef,n)
-        readline(file)
-        for i_atom in 1:n
-            line = split(readline(file))
-            atom = line[1]
-            xyz = parse.(Float64, line[2:end])
-            coors[i_atom,:] = xyz
-            atoms[i_atom] = atom
-        end
-        cog = sum(eachrow(coors))/n
-        coors = coors .- cog' # Shift to geometric centre
-        return coors, atoms
-    end
-end
-
-function orcaHess_reader(filename::String)
-	#= Reads .hess file from ORCA calculation.
-		Returns matrix C with normal modes as rows (including translation and rotation).
-	=#
-    open(filename) do file
-        while true
-            line = readline(file)
-            if startswith(line , "\$vibrational_frequencies")
-                break
-            end
-        end
-        dof = parse(Int, readline(file))
-        freqs = Array{Float64}(undef, dof)
-        for i in 1:dof
-            line =  split(readline(file))
-            freq = parse(Float64, line[2])
-            freqs[i] = freq
-        end
-		while true
-            line = readline(file)
-            if startswith(line, "\$normal_modes")
-                break
-            end
-        end
-		readline(file)
-        #dof = parse(Int, split(readline(file))[1])
-        C = Matrix{Float64}(undef, dof, dof)
-        i_block = 1
-        while i_block <= fld(dof, 5) + 1
-            readline(file)
-            i_dof = 1
-            while i_dof <= dof
-                c_ij = parse.(Float64, split(readline(file))[2:end])
-                for (j, cij) in enumerate(c_ij)
-                    C[ (i_block-1)*5 + j, i_dof ] = cij
-                end
-                i_dof += 1
-            end
-            i_block += 1
-        end
-		return (freqs, C)
-    end
-end
-
 function create_point(xyz, ϕ::Float64, θ::Float64)
-    #= Return point coordinates of [x,y,z] point in orthographic projection.
+    #= Return 2D coordinates of 3D [x,y,z] point using the orthographic projection.
         Point of View in polar coordinates has to be specified.
     =#
     pov = [ cosd(ϕ)*sind(θ), sind(ϕ)*sind(θ), cosd(θ) ]
@@ -243,12 +190,12 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
         end
     end
 	disps = disp_coors(xyzs, C, q)*40
-	dists2 = map( x -> norm(x), eachrow(reshape(C[q+6,:],(3,length(atoms)))') )
+	norms = map( x -> norm(x), eachrow(reshape(C[q+6,:],(3,length(atoms)))') )
 	arr_heads = map( p -> create_point(p, ϕ, θ), eachrow(disps))
 	arr_heads = map( p -> rotM'*p, arr_heads)
-	#arr_heads = map( (p, d) -> p*(40), arr_heads, dists2)
 	arr_heads = map( p -> Point(p...), arr_heads)
-	for (i, f, cnorm) in zip(points, arr_heads, dists2)
+	for (i, f, cnorm) in zip(points, arr_heads, norms)
+		println(cnorm)
 		if cnorm < 0.1
 			continue
 		end
@@ -261,7 +208,7 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
     for atom in to_plot
         name = atom[1]
         setcolor("black")
-        circle(atom[2],  2, :fill)
+        circle(atom[2],  4, :fill)
         fontsize(12)
         fontface("Sans")
         label(name, :NE, atom[2], offset=10)
@@ -278,10 +225,14 @@ end
             Main body of the programme:
 ==============================================================================#
 
-xyzs, atoms = xyz_reader(xyzfile)
+if adf
+	xyzs, atoms, freqs, C = ADF_reader(adf_out)
+else
+	xyzs, atoms = xyz_reader(xyzfile)
 
-if norm_mode
-	(freqs, C) = orcaHess_reader(NM_file)
+	if norm_mode
+		(freqs, C) = orcaHess_reader(NM_file)
+	end
 end
 
 # Create an interactive object:
