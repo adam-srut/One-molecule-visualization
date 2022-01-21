@@ -195,7 +195,6 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
 	arr_heads = map( p -> rotM'*p, arr_heads)
 	arr_heads = map( p -> Point(p...), arr_heads)
 	for (i, f, cnorm) in zip(points, arr_heads, norms)
-		println(cnorm)
 		if cnorm < 0.1
 			continue
 		end

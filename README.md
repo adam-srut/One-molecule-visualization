@@ -14,7 +14,7 @@ Run script from terminal specifying path to the .xyz file:
  Output format can be specified with option `-o [png, Default: svg]` (pdf format might not work properly).
  Try `$ ./one_mol_vis.jl --help` to list all options.
  
-*Check the dictionaries at the beginning of the script, expand them accordingly to cover all atom types presented in your xyz file.*
+*Check the dictionaries in the atom_types.jl of the script, expand them accordingly to cover all atom types presented in your xyz file.*
 
 ![one_mol_vis](https://user-images.githubusercontent.com/43886886/148700795-dbea7815-8d8a-49ed-a7b6-941573e8652b.png)
 
@@ -23,4 +23,5 @@ Run script from terminal specifying path to the .xyz file:
 - [ ] More complete support of various atom types.
 - [x] Visualization of normal modes from quantum chemistry calculations. 
     - [x] Support for Orca calculations.
+	- [x] Support for ADF calculations (--adf flag reads directly the output file)
     - [ ] Support for Turbomole calculations.
