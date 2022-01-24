@@ -32,6 +32,7 @@ function parse_commandline()
     return parse_args(s)
 end
 
+# Prepare essential variables (path to .xyz file, path to NM file):
 args = parse_commandline()
 xyzfile = args["xyz"]
 filename = split(xyzfile, '/')[end]
@@ -52,6 +53,8 @@ if args["normal_modes"] == nothing
         adf = true
         bond_thickness = 2
         norm_mode = true
+    else
+        adf = false
     end
 else
     norm_mode = true
