@@ -48,19 +48,21 @@ out_format = args["output_format"]
 
 if args["normal_modes"] == nothing
     norm_mode = false
-    if args["adf"] != nothing
-        adf_out = args["adf"]
-        adf = true
-        bond_thickness = 2
-        norm_mode = true
-    else
-        adf = false
-    end
 else
     norm_mode = true
     NM_file = args["normal_modes"]
     bond_thickness = 2
 end
+
+if args["adf"] != nothing
+    adf_out = args["adf"]
+    adf = true
+    bond_thickness = 2
+    norm_mode = true
+else
+    adf = false
+end
+
 
 #==============================================================================
             Load procedures:
