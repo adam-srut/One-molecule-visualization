@@ -24,4 +24,4 @@ Run script from terminal specifying path to the .xyz file:
 - [x] Visualization of normal modes from quantum chemistry calculations. 
     - [x] Support for Orca calculations.
 	- [x] Support for ADF calculations (--adf flag reads directly the output file)
-    - [ ] Support for Turbomole calculations.
+    - [x] Support for Turbomole calculations.
