@@ -22,11 +22,14 @@ function parse_commandline()
             help = "Specify output format [svg::Default, png]"
             arg_type = String
             default = "svg"
-        "--normal_modes", "-n"
+        "--orca"
             help = "Path to orca.hess file."
             arg_type = String
         "--adf"
             help = "ADF outfile with freq. calc. (no .xyz file is needed)"
+            arg_type = String
+        "--turbomole"
+            help = "Path to vib_normal_modes, vibspectrum is expected to be in the same directory"
             arg_type = String
     end
     return parse_args(s)
@@ -46,21 +49,35 @@ end
 bond_thickness = args["bond_thickness"]
 out_format = args["output_format"]
 
-if args["normal_modes"] == nothing
-    norm_mode = false
-else
-    norm_mode = true
-    NM_file = args["normal_modes"]
-    bond_thickness = 2
-end
-
 if args["adf"] != nothing
     adf_out = args["adf"]
     adf = true
     bond_thickness = 2
     norm_mode = true
+elseif args["orca"] != nothing
+    bond_thickness = 2
+    norm_mode = true
+    NM_file = args["orca"]
+    orca = true
+    adf = false
+elseif args["turbomole"] != nothing
+    bond_thickness = 2
+    norm_mode = true
+    NM_file = args["turbomole"]
+    dirpath = split(NM_file, '/')
+    if length(dirpath) > 1
+        freqfile = join(dirpath[1:end-1], '/') * '/' * "vibspectrum"
+    else
+        freqfile = "vibspectrum"
+    end
+    turbomole = true
+    orca = false
+    adf = false
 else
     adf = false
+    orca = false
+    turbomole = false
+    norm_mode = false
 end
 
 
@@ -72,6 +89,7 @@ end
 include("./procedures/ADF_reader.jl")
 include("./procedures/xyz_reader.jl")
 include("./procedures/ORCA-hess_reader.jl")
+include("./procedures/TURBOMOLE_reader.jl")
 
 # Load dictionaries with atomic types:
 include("./atom_types.jl")
@@ -200,11 +218,12 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
     arr_heads = map( p -> rotM'*p, arr_heads)
     arr_heads = map( p -> Point(p...), arr_heads)
     for (i, f, cnorm) in zip(points, arr_heads, norms)
-        if cnorm < 0.1
+        if norm(i-f) < 1
             continue
         end
+        #println(norm(i-f))
         setcolor("azure4")
-        arrow(i, f, arrowheadlength=22*cnorm, linewidth=2)
+        arrow(i, f, arrowheadlength=22*cnorm, linewidth=2.5)
     end
     # Order atoms by their distatce to pov and plot as labeled circles
     to_plot = map( (atom, point, dist) -> (atom, point, dist), atoms, points, dists)
@@ -234,8 +253,11 @@ if adf
 else
     xyzs, atoms = xyz_reader(xyzfile)
 
-    if norm_mode
+    if orca
         (freqs, C) = orcaHess_reader(NM_file)
+    elseif turbomole
+        C = TURBOMOLE_reader(NM_file, length(atoms)*3)
+        freqs = turbofreq_read(freqfile)
     end
 end
 

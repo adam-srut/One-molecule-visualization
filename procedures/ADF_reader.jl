@@ -9,7 +9,8 @@ function ADF_reader(filepath::String)
 				- frequencies as Array{String}
 				- normal modes as 3*N×3*N Matrix{Float64} =#
 	open(filepath) do file
-		while true
+		# Skip to the definition of atomic coordinates
+        while true
 			line = readline(file)
 			if startswith(line, " atom")
 				break
