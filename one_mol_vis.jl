@@ -222,8 +222,8 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
             continue
         end
         #println(norm(i-f))
-        setcolor("azure4")
-        arrow(i, f, arrowheadlength=22*cnorm, linewidth=2.5)
+        setcolor("cadetblue1")
+        arrow(i, f, arrowheadlength=22*cnorm, linewidth=2.8)
     end
     # Order atoms by their distatce to pov and plot as labeled circles
     to_plot = map( (atom, point, dist) -> (atom, point, dist), atoms, points, dists)
