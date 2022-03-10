@@ -1,7 +1,7 @@
 #!/usr/bin/env julia
 
 colors = Dict(
-    "N" => "blue",
+    "N" => "blue",      "Ru" => "brown",
     "O" => "red",
     "H" => "gray",
     "C" => "cyan",
@@ -9,7 +9,11 @@ colors = Dict(
     "S" => "orange"
 )
 radii = Dict(
-    "N" => 1.1, "O" => 1.1,  "H" => 0.8,
-    "C" => 1.0, "Cl" => 1.5, "S" => 1.2
+    "N" => 1.1,         "Ru" => 1.6, 
+    "O" => 1.1,  
+    "H" => 0.8,
+    "C" => 1.0, 
+    "Cl" => 1.5, 
+    "S" => 1.2    
 )
 

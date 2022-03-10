@@ -118,6 +118,10 @@ function create_point(xyz, ϕ::Float64, θ::Float64)
 end
 
 function disp_coors(xyzs::Array, Cmat::Matrix{Float64}, q::Int)
+    #= Displace molecular coordinates in the direction of qth normal mode.
+        Normal modes collected as rows of 3N×3N matrix C has to be specified.
+        Coordinates are read as N×3 array.
+    =#
     n = length(eachrow(xyzs))
     disp_vecs = reshape(Cmat[6+q,:], (3,n))'
     disp_points = xyzs + disp_vecs*2.2
@@ -136,7 +140,7 @@ function make_plot(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, 
     pov = [ r*cosd(ϕ)*sind(θ), r*sind(ϕ)*sind(θ), r*cosd(θ) ]
     rotM = [[ cosd(rotate), -sind(rotate)];; [sind(rotate), cosd(rotate)]]
     # Initiate drawing:
-    drawing = Drawing(600, 600, "$basename.$out_format")
+    drawing = Drawing(800, 600, "$basename.$out_format")
     origin()
     # Prepare points coordinates:
     point_coors = map( p -> create_point(p*50, ϕ, θ), eachrow(xyzs))
@@ -171,7 +175,7 @@ function make_plot(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, 
         setline(2)
         sethue("black")
         strokepath()
-        fontsize(12 + (r*0.2))
+        fontsize(10 + (r*0.2))
         fontface("Sans")
         text(name, atom[2], halign=:center, valign=:middle)
     end
