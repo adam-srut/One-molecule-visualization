@@ -7,12 +7,12 @@ Script for visualization of small molecules.
 Script requires compiled Julia with packages: ArgParse, Interact, Luxor, Colors and Blink.
 Run script from terminal specifying path to the .xyz file:
 ```
- $ ./one_mol_vis.jl /path/to/molecule.xyz 
+ $ one_mol_vis.jl /path/to/molecule.xyz 
  ```
  Interactive window will appear which allows you to rotate and resize your molecule.
  Molecule plot is automaticaly saved in the working directory every time you change the orientation of the molecule.
  Output format can be specified with option `-o [png, Default: svg]` (pdf format might not work properly).
- Try `$ ./one_mol_vis.jl --help` to list all options.
+ Try `$ one_mol_vis.jl --help` to list all the options.
  
 *Check the dictionaries in the atom_types.jl of the script, expand them accordingly to cover all atom types presented in your xyz file.*
 
