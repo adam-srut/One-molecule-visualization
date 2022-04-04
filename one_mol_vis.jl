@@ -192,10 +192,10 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
     pov = [ cosd(ϕ)*sind(θ), sind(ϕ)*sind(θ), cosd(θ) ]*20
     rotM = [[ cosd(rotate), -sind(rotate)];; [sind(rotate), cosd(rotate)]]
     # Initiate drawing:
-    drawing = Drawing(400, 400, "$basename.$out_format")
+    drawing = Drawing(800, 600, "$basename.$out_format")
     origin()
     # Prepare points coordinates:
-    point_coors = map( p -> create_point(p*40, ϕ, θ), eachrow(xyzs))
+    point_coors = map( p -> create_point(p*30, ϕ, θ), eachrow(xyzs))
     point_coors = map( p -> rotM'*p, point_coors)
     dists = map( x -> norm(x-pov), eachrow(xyzs))
     points = map(p -> Point(p...), point_coors)
@@ -216,7 +216,7 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
             end
         end
     end
-    disps = disp_coors(xyzs, C, q)*40
+    disps = disp_coors(xyzs, C, q)*30
     norms = map( x -> norm(x), eachrow(reshape(C[q+6,:],(3,length(atoms)))') )
     arr_heads = map( p -> create_point(p, ϕ, θ), eachrow(disps))
     arr_heads = map( p -> rotM'*p, arr_heads)
@@ -243,7 +243,7 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
     setcolor("azure4")
     freq = @sprintf "%.2f cm⁻¹" freqs[q+6]
     fontsize(14)
-    text(freq, Point(0,180), halign=:center, valign=:bottom)
+    text(freq, Point(0,100), halign=:center, valign=:bottom)
     finish()
     preview()
     return drawing
