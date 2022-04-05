@@ -31,6 +31,9 @@ function parse_commandline()
         "--turbomole"
             help = "Path to vib_normal_modes, vibspectrum is expected to be in the same directory"
             arg_type = String
+        "--markusdim"
+            help = "Path to markus-dimension.txt file"
+            arg_type = String
     end
     return parse_args(s)
 end
@@ -73,6 +76,12 @@ elseif args["turbomole"] != nothing
     turbomole = true
     orca = false
     adf = false
+elseif args["markusdim"] != nothing
+    norm_mode = true
+    bond_thickness = 2
+    adf = false
+    orca = false
+    turbomole = false
 else
     adf = false
     orca = false
@@ -271,6 +280,12 @@ if ! norm_mode
 
         make_plot( xyzs, atoms, r, ϕ, θ, rotate )
 
+    end
+elseif args["markusdim"] != nothing
+    include("./procedures/plot_markus.jl")
+    q_markus = read_markus_dimension(args["markusdim"], length(atoms))
+    one_mol = @manipulate for ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360
+        plot_markus(xyzs, atoms, ϕ, θ, rotate, q_markus)
     end
 else
     one_mol = @manipulate for 
