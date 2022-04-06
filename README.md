@@ -16,6 +16,8 @@ Run script from terminal specifying path to the .xyz file:
  
 *Check the dictionaries in the atom_types.jl of the script, expand them accordingly to cover all atom types presented in your xyz file.*
 
+***Warning: For visualization of normal modes the xyz coordinates cannot be rotated with respect to the coordiantes of the frequency calculation!***
+
 ![one_mol_vis](https://user-images.githubusercontent.com/43886886/148700795-dbea7815-8d8a-49ed-a7b6-941573e8652b.png)
 
 ### Coming soon:
