@@ -14,7 +14,7 @@ Run script from terminal specifying path to the .xyz file:
  Output format can be specified with option `-o [png, Default: svg]` (pdf format might not work properly).
  Try `$ one_mol_vis.jl --help` to list all the options.
  
-*Check the dictionaries in the atom_types.jl of the script, expand them accordingly to cover all atom types presented in your xyz file.*
+*Check the dictionaries in the atom_types.jl, expand them accordingly to cover all atom types presented in your xyz file.*
 
 ***Warning: For visualization of normal modes the xyz coordinates cannot be rotated with respect to the coordinates of the frequency calculation!***
 
