@@ -95,12 +95,12 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
 end
 
 
-function make_animation(xyzs, atoms, q)
+function make_animation(xyzs, atoms, q, name)
     function frame(scene, framenumber)
-        make_plot2(xyzs, atoms, 0.0, framenumber, 0.0, q)
+        make_plot2(xyzs, atoms, 90.0, framenumber, 0.0, q)
     end
-    anim = Movie(500, 500, "./markus_dimension")
-    Luxor.animate(anim, Scene( anim, frame, 1.0:360.0), creategif=true,pathname="./MDLCNM/markus_dimension.gif")
+    anim = Movie(500, 500, "./markus_dimension-$name")
+    Luxor.animate(anim, Scene( anim, frame, 1.0:360.0), creategif=true,pathname="./MDLCNM/markus_dimension-$name.gif")
 end
 
 

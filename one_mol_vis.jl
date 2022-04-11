@@ -285,7 +285,7 @@ elseif args["markusdim"] != nothing
     include("./procedures/plot_markus.jl")
     q_markus = read_markus_dimension(args["markusdim"], length(atoms))
     one_mol = @manipulate for ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360
-        plot_markus(xyzs, atoms, ϕ, θ, rotate, q_markus)
+        plot_markus(xyzs, atoms, ϕ, θ, rotate, q_markus*1.8)
     end
 else
     one_mol = @manipulate for 
