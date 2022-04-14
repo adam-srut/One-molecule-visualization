@@ -13,7 +13,7 @@ end
 
 
 
-function plot_markus(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate::Float64, q::Array, scale::Float64)
+function plot_markus(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate::Float64, q::Array, scale::Float64, name::String)
     #= Creates a drawing with Luxor package, that is saved as "one_mol_vis.svg".
         Atom types as Array{String} and xyz coordinates Matrix{Float64} has to be supplied.
         Point of View in polar coordinates is also required.
@@ -21,7 +21,7 @@ function plot_markus(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate
     pov = [ cosd(ϕ)*sind(θ), sind(ϕ)*sind(θ), cosd(θ) ]*20
     rotM = [[ cosd(rotate), -sind(rotate)];; [sind(rotate), cosd(rotate)]]
     # Initiate drawing:
-    drawing = Drawing(800, 600, "markus_dimension.svg")
+    drawing = Drawing(800, 600, "$name.svg")
     origin()
     # Prepare points coordinates:
     point_coors = map( p -> create_point(p*30, ϕ, θ), eachrow(xyzs))
