@@ -286,8 +286,8 @@ elseif args["markusdim"] != nothing
     mfile = args["markusdim"]
     basename = mfile[1:end-4]
     q_markus = read_markus_dimension(args["markusdim"], length(atoms))
-    one_mol = @manipulate for ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360, q_scale in 0.5:0.1:2.0
-        plot_markus(xyzs, atoms, ϕ, θ, rotate, q_markus, q_scale, basename)
+    one_mol = @manipulate for ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360, q_scale in 0.5:0.1:2.0, labels in ["atom", "index"]
+        plot_markus(xyzs, atoms, ϕ, θ, rotate, q_markus, q_scale, basename, labels)
     end
 else
     one_mol = @manipulate for 

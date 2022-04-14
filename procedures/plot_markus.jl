@@ -13,7 +13,7 @@ end
 
 
 
-function plot_markus(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate::Float64, q::Array, scale::Float64, name::String)
+function plot_markus(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate::Float64, q::Array, scale::Float64, name::String, labels::String)
     #= Creates a drawing with Luxor package, that is saved as "one_mol_vis.svg".
         Atom types as Array{String} and xyz coordinates Matrix{Float64} has to be supplied.
         Point of View in polar coordinates is also required.
@@ -21,7 +21,7 @@ function plot_markus(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate
     pov = [ cosd(ϕ)*sind(θ), sind(ϕ)*sind(θ), cosd(θ) ]*20
     rotM = [[ cosd(rotate), -sind(rotate)];; [sind(rotate), cosd(rotate)]]
     # Initiate drawing:
-    drawing = Drawing(800, 600, "$name.svg")
+    drawing = Drawing(500, 400, "$name.svg")
     origin()
     # Prepare points coordinates:
     point_coors = map( p -> create_point(p*30, ϕ, θ), eachrow(xyzs))
@@ -46,6 +46,7 @@ function plot_markus(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate
         end
     end
     n = length(atoms)
+    indices = [i for (i,atom) in enumerate(atoms)]
     disp_vecs = reshape(q*scale, (3,n))'
     disps = (xyzs + disp_vecs*2.2)*30
     norms = map( x -> norm(x), eachrow(reshape(q*scale, (3, n))') )
@@ -62,9 +63,13 @@ function plot_markus(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate
     end
     # Order atoms by their distatce to pov and plot as labeled circles
     to_plot = map( (atom, point, dist) -> (atom, point, dist), atoms, points, dists)
-    sort!(to_plot, by = x -> x[3])
-    for atom in to_plot
-        name = atom[1]
+    #sort!(to_plot, by = x -> x[3])
+    for (i, atom) in enumerate(to_plot)
+        if labels == "atom"
+            name = atom[1]
+        else 
+            name = string(indices[i])
+        end
         setcolor("black")
         circle(atom[2],  4, :fill)
         fontsize(12)
