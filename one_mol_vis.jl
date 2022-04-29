@@ -52,18 +52,19 @@ end
 bond_thickness = args["bond_thickness"]
 out_format = args["output_format"]
 
-if args["adf"] != nothing
+# Check what plotting routine is requested and set appropriete variables:
+if args["adf"] != nothing       # Visualzation of norm. modes. with ADF (directly from .out file)
     adf_out = args["adf"]
     adf = true
     bond_thickness = 2
     norm_mode = true
-elseif args["orca"] != nothing
+elseif args["orca"] != nothing      # Visualzation of norm. modes. with ORCA
     bond_thickness = 2
     norm_mode = true
     NM_file = args["orca"]
     orca = true
     adf = false
-elseif args["turbomole"] != nothing
+elseif args["turbomole"] != nothing # Visualzation of norm. modes. with TURBOMOLE
     bond_thickness = 2
     norm_mode = true
     NM_file = args["turbomole"]
@@ -71,18 +72,18 @@ elseif args["turbomole"] != nothing
     if length(dirpath) > 1
         freqfile = join(dirpath[1:end-1], '/') * '/' * "vibspectrum"
     else
-        freqfile = "vibspectrum"
+        freqfile = "vibspectrum" # File vibspectrum has to be presented in working dir.
     end
     turbomole = true
     orca = false
     adf = false
-elseif args["markusdim"] != nothing
+elseif args["markusdim"] != nothing     # Visualization of Markus dimension (in house feature)
     norm_mode = true
     bond_thickness = 2
     adf = false
     orca = false
     turbomole = false
-else
+else    # Plain visualization of molecular geometry
     adf = false
     orca = false
     turbomole = false
@@ -197,6 +198,7 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
     #= Creates a drawing with Luxor package, that is saved as "one_mol_vis.svg".
         Atom types as Array{String} and xyz coordinates Matrix{Float64} has to be supplied.
         Point of View in polar coordinates is also required.
+        This function serves for visualization of normal modes!
     =#
     pov = [ cosd(ϕ)*sind(θ), sind(ϕ)*sind(θ), cosd(θ) ]*20
     rotM = [[ cosd(rotate), -sind(rotate)];; [sind(rotate), cosd(rotate)]]
@@ -234,7 +236,6 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
         if norm(i-f) < 1
             continue
         end
-        #println(norm(i-f))
         setcolor("cadetblue3")
         arrow(i, f, arrowheadlength=22*cnorm, linewidth=2.8)
     end
@@ -261,6 +262,7 @@ end
             Main body of the programme:
 ==============================================================================#
 
+# Read input parameters:
 if adf
     xyzs, atoms, freqs, C = ADF_reader(adf_out)
 else
@@ -275,13 +277,13 @@ else
 end
 
 # Create an interactive object:
-if ! norm_mode
+if ! norm_mode # Plain visualization of molecular geometry
     one_mol = @manipulate for r in 10:40, ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360
 
         make_plot( xyzs, atoms, r, ϕ, θ, rotate )
 
     end
-elseif args["markusdim"] != nothing
+elseif args["markusdim"] != nothing # Visualization of Marcus dimension
     include("./procedures/plot_markus.jl")
     mfile = args["markusdim"]
     basename = mfile[1:end-4]
@@ -290,7 +292,7 @@ elseif args["markusdim"] != nothing
         plot_markus(xyzs, atoms, ϕ, θ, rotate, q_markus, q_scale, basename, labels)
     end
 else
-    one_mol = @manipulate for 
+    one_mol = @manipulate for # Visualization of normal modes
              ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360, q in 1:(length(atoms)*3-6)
 
         make_plot2( xyzs, atoms, ϕ, θ, rotate, q )
