@@ -168,7 +168,7 @@ function make_plot(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, 
                 continue
             end
             d = norm(xyzs[i,:]-xyzs[j,:])
-            if noHs && atoms[i] == "H"
+            if noHs && (atoms[i] == "H" || atoms[j] == "H")
                 continue
             end
             if atoms[i] == "H" && atoms[j] == "H"
@@ -229,7 +229,7 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
                 continue
             end
             d = norm(xyzs[i,:]-xyzs[j,:])
-            if noHs && atoms[i] == "H"
+            if noHs && (atoms[i] == "H" || atoms[j] == "H")
                 continue
             end
             if atoms[i] == "H" && atoms[j] == "H"
