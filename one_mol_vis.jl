@@ -1,4 +1,4 @@
-#! /usr/bin/env julia
+#! /usr/bin/env -S julia --project=one_mol_vis -J/home/adam/programs/one_mol_vis-dev/one_mol_vis/one_mol_vis.so
 
 
 
@@ -34,6 +34,9 @@ function parse_commandline()
         "--markusdim"
             help = "Path to markus-dimension.txt file"
             arg_type = String
+        "--noHs"
+            help = "Exlude hydrogens from visualization"
+            action = :store_true
     end
     return parse_args(s)
 end
@@ -51,6 +54,7 @@ else
 end
 bond_thickness = args["bond_thickness"]
 out_format = args["output_format"]
+noHs = args["noHs"]
 
 # Check what plotting routine is requested and set appropriete variables:
 if args["adf"] != nothing       # Visualzation of norm. modes. with ADF (directly from .out file)
@@ -164,6 +168,9 @@ function make_plot(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, 
                 continue
             end
             d = norm(xyzs[i,:]-xyzs[j,:])
+            if noHs && atoms[i] == "H"
+                continue
+            end
             if atoms[i] == "H" && atoms[j] == "H"
                 continue
             end
@@ -179,6 +186,9 @@ function make_plot(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, 
     sort!(to_plot, by = x -> x[3])
     for atom in to_plot
         name = atom[1]
+        if name == "H" && noHs
+            continue
+        end
         scale = radii[name]
         setcolor(colors[name])
         circle(atom[2],  (0.8*atom[3])^2/r*scale, :fillpreserve)
@@ -194,12 +204,14 @@ function make_plot(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, 
     return drawing
 end
 
+
 function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate::Float64, q::Int)
     #= Creates a drawing with Luxor package, that is saved as "one_mol_vis.svg".
         Atom types as Array{String} and xyz coordinates Matrix{Float64} has to be supplied.
         Point of View in polar coordinates is also required.
         This function serves for visualization of normal modes!
     =#
+    global noHs
     pov = [ cosd(ϕ)*sind(θ), sind(ϕ)*sind(θ), cosd(θ) ]*20
     rotM = [[ cosd(rotate), -sind(rotate)];; [sind(rotate), cosd(rotate)]]
     # Initiate drawing:
@@ -217,10 +229,13 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
                 continue
             end
             d = norm(xyzs[i,:]-xyzs[j,:])
+            if noHs && atoms[i] == "H"
+                continue
+            end
             if atoms[i] == "H" && atoms[j] == "H"
                 continue
             end
-            if d < 1.5
+            if d < 1.65
                 sethue("black")
                 setline(bond_thickness)
                 line(points[i], points[j], :stroke)
@@ -232,18 +247,21 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
     arr_heads = map( p -> create_point(p, ϕ, θ), eachrow(disps))
     arr_heads = map( p -> rotM'*p, arr_heads)
     arr_heads = map( p -> Point(p...), arr_heads)
-    for (i, f, cnorm) in zip(points, arr_heads, norms)
-        if norm(i-f) < 1
+    for (i ,(p, f, cnorm)) in enumerate(zip(points, arr_heads, norms))
+        if norm(p-f) < 1 || (atoms[i] == "H" && noHs)
             continue
         end
         setcolor("cadetblue3")
-        arrow(i, f, arrowheadlength=22*cnorm, linewidth=2.8)
+        arrow(p, f, arrowheadlength=22*cnorm, linewidth=2.8)
     end
     # Order atoms by their distatce to pov and plot as labeled circles
     to_plot = map( (atom, point, dist) -> (atom, point, dist), atoms, points, dists)
     sort!(to_plot, by = x -> x[3])
     for atom in to_plot
         name = atom[1]
+        if noHs && name == "H"
+            continue
+        end
         setcolor("black")
         circle(atom[2],  4, :fill)
         fontsize(12)
@@ -276,6 +294,7 @@ else
     end
 end
 
+
 # Create an interactive object:
 if ! norm_mode # Plain visualization of molecular geometry
     one_mol = @manipulate for r in 10:40, ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360
@@ -294,7 +313,6 @@ elseif args["markusdim"] != nothing # Visualization of Marcus dimension
 else
     one_mol = @manipulate for # Visualization of normal modes
              ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360, q in 1:(length(atoms)*3-6)
-
         make_plot2( xyzs, atoms, ϕ, θ, rotate, q )
 
     end
