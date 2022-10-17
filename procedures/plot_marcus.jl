@@ -1,19 +1,19 @@
-function read_markus_dimension(filepath::String, Natoms::Int)
+function read_marcus_dimension(filepath::String, Natoms::Int)
     open(filepath) do file
         readline(file)
         readline(file)
-        q_markus = Array{Float64}(undef, 0) 
+        q_marcus = Array{Float64}(undef, 0) 
         for line in eachline(file)
             dxyz = parse.(Float64, split(line)[2:end])
-            append!(q_markus, dxyz)
+            append!(q_marcus, dxyz)
         end
-        return q_markus
+        return q_marcus
     end
 end
 
 
 
-function plot_markus(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate::Float64, q::Array, scale::Float64, name::String, labels::String)
+function plot_marcus(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate::Float64, q::Array, scale::Float64, name::String, labels::String)
     #= Creates a drawing with Luxor package, that is saved as "one_mol_vis.svg".
         Atom types as Array{String} and xyz coordinates Matrix{Float64} has to be supplied.
         Point of View in polar coordinates is also required.
@@ -49,16 +49,22 @@ function plot_markus(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate
     indices = [i for (i,atom) in enumerate(atoms)]
     disp_vecs = reshape(q*scale, (3,n))'
     disps = (xyzs + disp_vecs*2.2)*30
+    disps2 = (xyzs + disp_vecs*2.4)*30
     norms = map( x -> norm(x), eachrow(reshape(q*scale, (3, n))') )
     arr_heads = map( p -> create_point(p, ϕ, θ), eachrow(disps))
     arr_heads = map( p -> rotM'*p, arr_heads)
     arr_heads = map( p -> Point(p...), arr_heads)
-    for (i, f, cnorm) in zip(points, arr_heads, norms)
+    arr_heads2 = map( p -> create_point(p, ϕ, θ), eachrow(disps2))
+    arr_heads2 = map( p -> rotM'*p, arr_heads2)
+    arr_heads2 = map( p -> Point(p...), arr_heads2)
+    for (i, f, f2, cnorm) in zip(points, arr_heads, arr_heads2, norms)
         if norm(i-f) < 1
             continue
         end
-        #println(norm(i-f))
-        setcolor("cadetblue3")
+        #setcolor("cadetblue3")
+        setcolor("gray80")
+        arrow(i, f2, arrowheadlength=30*cnorm, linewidth=5.0)
+        setcolor("firebrick2")
         arrow(i, f, arrowheadlength=22*cnorm, linewidth=2.8)
     end
     # Order atoms by their distatce to pov and plot as labeled circles

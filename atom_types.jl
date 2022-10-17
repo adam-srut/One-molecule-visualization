@@ -2,7 +2,7 @@
 
 colors = Dict(
     "N" => "blue",      "Ru" => "brown",
-    "O" => "red",
+    "O" => "red",       "Re" => "pink",
     "H" => "gray",
     "C" => "cyan",
     "Cl" => "yellow",
@@ -10,7 +10,7 @@ colors = Dict(
 )
 radii = Dict(
     "N" => 1.1,         "Ru" => 1.6, 
-    "O" => 1.1,  
+    "O" => 1.1,         "Re" => 1.6,
     "H" => 0.8,
     "C" => 1.0, 
     "Cl" => 1.5, 

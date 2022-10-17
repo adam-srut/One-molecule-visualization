@@ -31,8 +31,8 @@ function parse_commandline()
         "--turbomole"
             help = "Path to vib_normal_modes, vibspectrum is expected to be in the same directory"
             arg_type = String
-        "--markusdim"
-            help = "Path to markus-dimension.txt file"
+        "--marcusdim"
+            help = "Path to marcus-dimension.txt file"
             arg_type = String
         "--noHs"
             help = "Exlude hydrogens from visualization"
@@ -81,7 +81,7 @@ elseif args["turbomole"] != nothing # Visualzation of norm. modes. with TURBOMOL
     turbomole = true
     orca = false
     adf = false
-elseif args["markusdim"] != nothing     # Visualization of Markus dimension (in house feature)
+elseif args["marcusdim"] != nothing     # Visualization of Marcus dimension (in house feature)
     norm_mode = true
     bond_thickness = 2
     adf = false
@@ -302,13 +302,13 @@ if ! norm_mode # Plain visualization of molecular geometry
         make_plot( xyzs, atoms, r, ϕ, θ, rotate )
 
     end
-elseif args["markusdim"] != nothing # Visualization of Marcus dimension
-    include("./procedures/plot_markus.jl")
-    mfile = args["markusdim"]
+elseif args["marcusdim"] != nothing # Visualization of Marcus dimension
+    include("./procedures/plot_marcus.jl")
+    mfile = args["marcusdim"]
     basename = mfile[1:end-4]
-    q_markus = read_markus_dimension(args["markusdim"], length(atoms))
+    q_markus = read_marcus_dimension(args["marcusdim"], length(atoms))
     one_mol = @manipulate for ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360, q_scale in 0.5:0.1:2.0, labels in ["atom", "index"]
-        plot_markus(xyzs, atoms, ϕ, θ, rotate, q_markus, q_scale, basename, labels)
+        plot_marcus(xyzs, atoms, ϕ, θ, rotate, q_markus, q_scale, basename, labels)
     end
 else
     one_mol = @manipulate for # Visualization of normal modes
