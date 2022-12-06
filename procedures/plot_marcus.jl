@@ -13,7 +13,8 @@ end
 
 
 
-function plot_marcus(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate::Float64, q::Array, scale::Float64, name::String, labels::String)
+function plot_marcus(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate::Float64, q::Array, scale::Float64, name::String, 
+        labels::String, color, mode::String)
     #= Creates a drawing with Luxor package, that is saved as "one_mol_vis.svg".
         Atom types as Array{String} and xyz coordinates Matrix{Float64} has to be supplied.
         Point of View in polar coordinates is also required.
@@ -21,13 +22,17 @@ function plot_marcus(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate
     pov = [ cosd(ϕ)*sind(θ), sind(ϕ)*sind(θ), cosd(θ) ]*20
     rotM = [[ cosd(rotate), -sind(rotate)];; [sind(rotate), cosd(rotate)]]
     # Initiate drawing:
-    drawing = Drawing(500, 400, "$name.svg")
+    drawing = Drawing(800, 600, "$name.svg")
     origin()
     # Prepare points coordinates:
     point_coors = map( p -> create_point(p*30, ϕ, θ), eachrow(xyzs))
     point_coors = map( p -> rotM'*p, point_coors)
     dists = map( x -> norm(x-pov), eachrow(xyzs))
     points = map(p -> Point(p...), point_coors)
+    # Different bonding distaces for heavy-atoms:
+    heavy_atoms = ["Ru", "Re", "Fe"]
+    sethue("black")
+    setline(bond_thickness)
     # Draw a skelet from bonds:
     for i in eachindex(points)
         for j in eachindex(points)
@@ -39,9 +44,9 @@ function plot_marcus(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate
                 continue
             end
             if d < 1.5
-                sethue("black")
-                setline(bond_thickness)
                 line(points[i], points[j], :stroke)
+            elseif (atoms[i] in heavy_atoms || atoms[j] in heavy_atoms) && d < 2.5
+                line(points[i], points[j], :stroke)               
             end
         end
     end
@@ -49,38 +54,40 @@ function plot_marcus(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate
     indices = [i for (i,atom) in enumerate(atoms)]
     disp_vecs = reshape(q*scale, (3,n))'
     disps = (xyzs + disp_vecs*2.2)*30
-    disps2 = (xyzs + disp_vecs*2.4)*30
     norms = map( x -> norm(x), eachrow(reshape(q*scale, (3, n))') )
     arr_heads = map( p -> create_point(p, ϕ, θ), eachrow(disps))
     arr_heads = map( p -> rotM'*p, arr_heads)
     arr_heads = map( p -> Point(p...), arr_heads)
-    arr_heads2 = map( p -> create_point(p, ϕ, θ), eachrow(disps2))
-    arr_heads2 = map( p -> rotM'*p, arr_heads2)
-    arr_heads2 = map( p -> Point(p...), arr_heads2)
-    for (i, f, f2, cnorm) in zip(points, arr_heads, arr_heads2, norms)
+    for (i, f, cnorm) in zip(points, arr_heads, norms)
         if norm(i-f) < 1
             continue
         end
-        #setcolor("cadetblue3")
-        setcolor("gray80")
-        arrow(i, f2, arrowheadlength=30*cnorm, linewidth=5.0)
-        setcolor("firebrick2")
+        setcolor(color)
         arrow(i, f, arrowheadlength=22*cnorm, linewidth=2.8)
     end
     # Order atoms by their distatce to pov and plot as labeled circles
     to_plot = map( (atom, point, dist) -> (atom, point, dist), atoms, points, dists)
     #sort!(to_plot, by = x -> x[3])
     for (i, atom) in enumerate(to_plot)
-        if labels == "atom"
-            name = atom[1]
-        else 
-            name = string(indices[i])
+        atom_scale = radii[atom[1]]
+        if mode == "Legended"
+            setcolor(colors[atom[1]])
+            circle(atom[2],  4*atom_scale, :fillpreserve)
+        else
+            if labels == "atom"
+                name = atom[1]
+            else
+                name = string(indices[i])
+            end
+            setcolor("black")
+            circle(atom[2],  4*atom_scale, :fill)
+            fontsize(12)
+            fontface("Sans")
+            label(name, :NE, atom[2], offset=10)
         end
-        setcolor("black")
-        circle(atom[2],  4, :fill)
-        fontsize(12)
-        fontface("Sans")
-        label(name, :NE, atom[2], offset=10)
+    end
+    if mode == "Legended"
+        draw_legend(atoms)
     end
     finish()
     preview()

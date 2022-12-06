@@ -1,10 +1,10 @@
 #!/usr/bin/env julia
 
 colors = Dict(
-    "N" => "blue",      "Ru" => "brown",
-    "O" => "red",       "Re" => "pink",
-    "H" => "gray",
-    "C" => "cyan",
+    "N" => "royalblue4",       "Ru" => "steelblue",
+    "O" => "red3",             "Re" => "pink",
+    "H" => "gray90",
+    "C" => "darkgrey",
     "Cl" => "yellow",
     "S" => "orange"
 )

@@ -16,8 +16,8 @@ function parse_commandline()
             #required = true
         "--bond_thickness", "-b"
             help = "Specify bond thickness"
-            arg_type = Int
-            default = 4
+            arg_type = Number
+            default = 2.5
         "--output_format", "-o"
             help = "Specify output format [svg::Default, png]"
             arg_type = String
@@ -142,8 +142,26 @@ function disp_coors(xyzs::Array, Cmat::Matrix{Float64}, q::Int)
     return disp_points
 end
 
+function draw_legend(atoms::Array)
+    #= Draw legend in the top-left corner.
+        Depends on size of Drawing in fucntions make_plot and make_plot2 =#
+    types = unique(atoms)
+    Ntypes = length(types)
+    for (n, type) in enumerate(types)
+        scale = radii[type]
+        setcolor(colors[type])
+        circle(Point(350, -280 + 20*(n-1)), 4*scale, :fillpreserve)
+        sethue("black")
+        fontface("Sans")
+        text(type, Point(370, -280 + 20*(n-1)), halign=:center, valign=:middle)
+    end
+    setline(2)
+    box_center = Point(360, -280 + (Ntypes-1)*10)
+    box( box_center, 50, (Ntypes+0.5)*20, 10, action=:stroke )
+end
 
-function make_plot(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, rotate::Float64)
+function make_plot(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, rotate::Float64,
+    mode::String)
     #= Creates a drawing with Luxor package, that is saved as "one_mol_vis.svg".
         Atom types as Array{String} and xyz coordinates Matrix{Float64} has to be supplied.
         Point of View in polar coordinates is also required.
@@ -157,7 +175,7 @@ function make_plot(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, 
     drawing = Drawing(800, 600, "$basename.$out_format")
     origin()
     # Prepare points coordinates:
-    point_coors = map( p -> create_point(p*50, ϕ, θ), eachrow(xyzs))
+    point_coors = map( p -> create_point(p*40, ϕ, θ), eachrow(xyzs))
     point_coors = map( p -> rotM'*p, point_coors)
     dists = map( x -> norm(x-pov), eachrow(xyzs))
     points = map(p -> Point(p...), point_coors*r/25) #.*(dists*1.5))
@@ -191,13 +209,20 @@ function make_plot(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, 
         end
         scale = radii[name]
         setcolor(colors[name])
-        circle(atom[2],  (0.8*atom[3])^2/r*scale, :fillpreserve)
-        setline(2)
-        sethue("black")
-        strokepath()
-        fontsize(10 + (r*0.2))
-        fontface("Sans")
-        text(name, atom[2], halign=:center, valign=:middle)
+        if mode == "Legended"
+            circle(atom[2],  4*scale, :fillpreserve)
+        else
+            circle(atom[2],  (0.8*atom[3])^2/r*scale, :fillpreserve)
+            setline(2)
+            sethue("black")
+            strokepath()
+            fontsize(10 + (r*0.2))
+            fontface("Sans")
+            text(name, atom[2], halign=:center, valign=:middle)
+        end
+    end
+    if mode == "Legended"
+        draw_legend(atoms)
     end
     finish()
     preview()
@@ -205,11 +230,12 @@ function make_plot(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, 
 end
 
 
-function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate::Float64, q::Int)
+function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate::Float64, q::Int,
+    color, mode::String)
     #= Creates a drawing with Luxor package, that is saved as "one_mol_vis.svg".
         Atom types as Array{String} and xyz coordinates Matrix{Float64} has to be supplied.
         Point of View in polar coordinates is also required.
-        This function serves for visualization of normal modes!
+        This function serves for visualization of normal modes.
     =#
     global noHs
     pov = [ cosd(ϕ)*sind(θ), sind(ϕ)*sind(θ), cosd(θ) ]*20
@@ -251,7 +277,7 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
         if norm(p-f) < 1 || (atoms[i] == "H" && noHs)
             continue
         end
-        setcolor("cadetblue3")
+        setcolor(color)
         arrow(p, f, arrowheadlength=22*cnorm, linewidth=2.8)
     end
     # Order atoms by their distatce to pov and plot as labeled circles
@@ -262,16 +288,25 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
         if noHs && name == "H"
             continue
         end
-        setcolor("black")
-        circle(atom[2],  4, :fill)
-        fontsize(12)
-        fontface("Sans")
-        label(name, :NE, atom[2], offset=10)
+        scale = radii[name]
+        if mode == "Legended"
+            setcolor(colors[name])
+            circle(atom[2],  4*scale, :fillpreserve)
+        else
+            setcolor("black")
+            circle(atom[2],  4*scale, :fill)
+            fontsize(12)
+            fontface("Sans")
+            label(name, :NE, atom[2], offset=10)
+        end
     end
     setcolor("azure4")
     freq = @sprintf "%.2f cm⁻¹" freqs[q+6]
     fontsize(14)
-    text(freq, Point(0,100), halign=:center, valign=:bottom)
+    text(freq, Point(0,-390), halign=:center, valign=:bottom)
+    if mode == "Legended"
+        draw_legend(atoms)
+    end
     finish()
     preview()
     return drawing
@@ -294,12 +329,12 @@ else
     end
 end
 
-
 # Create an interactive object:
 if ! norm_mode # Plain visualization of molecular geometry
-    one_mol = @manipulate for r in 10:40, ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360
+    one_mol = @manipulate for r in 10:40, ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360,
+        mode in ["Legended", "Labeled"]
 
-        make_plot( xyzs, atoms, r, ϕ, θ, rotate )
+        make_plot( xyzs, atoms, r, ϕ, θ, rotate, mode )
 
     end
 elseif args["marcusdim"] != nothing # Visualization of Marcus dimension
@@ -307,13 +342,17 @@ elseif args["marcusdim"] != nothing # Visualization of Marcus dimension
     mfile = args["marcusdim"]
     basename = mfile[1:end-4]
     q_markus = read_marcus_dimension(args["marcusdim"], length(atoms))
-    one_mol = @manipulate for ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360, q_scale in 0.5:0.1:2.0, labels in ["atom", "index"]
-        plot_marcus(xyzs, atoms, ϕ, θ, rotate, q_markus, q_scale, basename, labels)
+    one_mol = @manipulate for ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360, q_scale in 0.5:0.1:2.0, 
+        labels in ["atom", "index"], color in colorant"darkorange1", mode in ["Legended", "Labeled"]
+
+        plot_marcus(xyzs, atoms, ϕ, θ, rotate, q_markus, q_scale, basename, labels, color, mode)
+
     end
 else
     one_mol = @manipulate for # Visualization of normal modes
-             ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360, q in 1:(length(atoms)*3-6)
-        make_plot2( xyzs, atoms, ϕ, θ, rotate, q )
+             ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360, q in 1:(length(atoms)*3-6), color in colorant"cadetblue3",
+             mode in ["Legended", "Labeled"]
+        make_plot2( xyzs, atoms, ϕ, θ, rotate, q, color, mode)
 
     end
 end
