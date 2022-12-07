@@ -39,6 +39,9 @@ function plot_marcus(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate
             if j >= i
                 continue
             end
+            if noHs && (atoms[i] == "H" || atoms[j] == "H")
+                continue
+            end
             d = norm(xyzs[i,:]-xyzs[j,:])
             if atoms[i] == "H" && atoms[j] == "H"
                 continue
@@ -58,18 +61,21 @@ function plot_marcus(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate
     arr_heads = map( p -> create_point(p, ϕ, θ), eachrow(disps))
     arr_heads = map( p -> rotM'*p, arr_heads)
     arr_heads = map( p -> Point(p...), arr_heads)
-    for (i, f, cnorm) in zip(points, arr_heads, norms)
-        if norm(i-f) < 1
+    for (i ,(p, f, cnorm)) in enumerate(zip(points, arr_heads, norms))
+        if norm(p-f) < 1 || (atoms[i] == "H" && noHs)
             continue
         end
         setcolor(color)
-        arrow(i, f, arrowheadlength=22*cnorm, linewidth=2.8)
+        arrow(p, f, arrowheadlength=22*cnorm, linewidth=2.8)
     end
     # Order atoms by their distatce to pov and plot as labeled circles
-    to_plot = map( (atom, point, dist) -> (atom, point, dist), atoms, points, dists)
-    #sort!(to_plot, by = x -> x[3])
+    to_plot = map( (atom, point, dist, index) -> (atom, point, dist, index), atoms, points, dists, indices)
+    sort!(to_plot, by = x -> x[3])
     for (i, atom) in enumerate(to_plot)
         atom_scale = radii[atom[1]]
+        if noHs && atom[1] == "H"
+            continue
+        end
         if mode == "Legended"
             setcolor(colors[atom[1]])
             circle(atom[2],  4*atom_scale, :fillpreserve)
@@ -77,7 +83,7 @@ function plot_marcus(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate
             if labels == "atom"
                 name = atom[1]
             else
-                name = string(indices[i])
+                name = string(atom[4])
             end
             setcolor("black")
             circle(atom[2],  4*atom_scale, :fill)
