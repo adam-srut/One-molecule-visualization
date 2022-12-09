@@ -14,11 +14,12 @@ end
 
 
 function plot_marcus(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate::Float64, q::Array, scale::Float64, name::String, 
-        labels::String, color, mode::String)
+        labels::String, color, mode::String, hydrogens::Symbol)
     #= Creates a drawing with Luxor package, that is saved as "one_mol_vis.svg".
         Atom types as Array{String} and xyz coordinates Matrix{Float64} has to be supplied.
         Point of View in polar coordinates is also required.
     =#
+    hydrogens == :on ? (noHs = false) : (noHs = true)
     pov = [ cosd(ϕ)*sind(θ), sind(ϕ)*sind(θ), cosd(θ) ]*20
     rotM = [[ cosd(rotate), -sind(rotate)];; [sind(rotate), cosd(rotate)]]
     # Initiate drawing:

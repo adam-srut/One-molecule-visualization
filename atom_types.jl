@@ -1,5 +1,7 @@
 #!/usr/bin/env julia
 
+# Available colors: http://juliagraphics.github.io/Luxor.jl/stable/howto/colors-styles/
+
 colors = Dict(
     "N" => "royalblue4",       "Ru" => "steelblue",
     "O" => "red3",             "Re" => "pink",

@@ -34,9 +34,6 @@ function parse_commandline()
         "--marcusdim"
             help = "Path to marcus-dimension.txt file"
             arg_type = String
-        "--noHs"
-            help = "Exlude hydrogens from visualization"
-            action = :store_true
     end
     return parse_args(s)
 end
@@ -54,7 +51,6 @@ else
 end
 bond_thickness = args["bond_thickness"]
 out_format = args["output_format"]
-noHs = args["noHs"]
 
 # Check what plotting routine is requested and set appropriete variables:
 if args["adf"] != nothing       # Visualzation of norm. modes. with ADF (directly from .out file)
@@ -161,12 +157,13 @@ function draw_legend(atoms::Array)
 end
 
 function make_plot(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, rotate::Float64,
-    mode::String)
+    mode::String, hydrogens::Symbol)
     #= Creates a drawing with Luxor package, that is saved as "one_mol_vis.svg".
         Atom types as Array{String} and xyz coordinates Matrix{Float64} has to be supplied.
         Point of View in polar coordinates is also required.
         Change to .png is possible, .pdf exhibits certain issues.
     =#
+    hydrogens == :on ? (noHs = false) : (noHs = true)
     global bond_thickness
     global out_format
     pov = [ r*cosd(ϕ)*sind(θ), r*sind(ϕ)*sind(θ), r*cosd(θ) ]
@@ -231,13 +228,13 @@ end
 
 
 function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate::Float64, q::Int,
-    color, mode::String)
+    color, mode::String, hydrogens::Symbol)
     #= Creates a drawing with Luxor package, that is saved as "one_mol_vis.svg".
         Atom types as Array{String} and xyz coordinates Matrix{Float64} has to be supplied.
         Point of View in polar coordinates is also required.
         This function serves for visualization of normal modes.
     =#
-    global noHs
+    hydrogens == :on ? (noHs = false) : (noHs = true)
     pov = [ cosd(ϕ)*sind(θ), sind(ϕ)*sind(θ), cosd(θ) ]*20
     rotM = [[ cosd(rotate), -sind(rotate)];; [sind(rotate), cosd(rotate)]]
     # Initiate drawing:
@@ -329,12 +326,15 @@ else
     end
 end
 
+# Create widgets:
+H_widget = widget([:on, :off], label="Show hydrogens:")
+
 # Create an interactive object:
 if ! norm_mode # Plain visualization of molecular geometry
     one_mol = @manipulate for r in 10:40, ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360,
-        mode in ["Legended", "Labeled"]
+        mode in ["Legended", "Labeled"], hydrogens in H_widget
 
-        make_plot( xyzs, atoms, r, ϕ, θ, rotate, mode )
+        make_plot( xyzs, atoms, r, ϕ, θ, rotate, mode, hydrogens )
 
     end
 elseif args["marcusdim"] != nothing # Visualization of Marcus dimension
@@ -343,16 +343,17 @@ elseif args["marcusdim"] != nothing # Visualization of Marcus dimension
     basename = mfile[1:end-4]
     q_markus = read_marcus_dimension(args["marcusdim"], length(atoms))
     one_mol = @manipulate for ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360, q_scale in 0.5:0.1:2.0, 
-        labels in ["atom", "index"], color in colorant"darkorange1", mode in ["Legended", "Labeled"]
+        labels in ["atom", "index"], color in colorant"darkorange1", mode in ["Legended", "Labeled"],
+        hydrogens in H_widget
 
-        plot_marcus(xyzs, atoms, ϕ, θ, rotate, q_markus, q_scale, basename, labels, color, mode)
+        plot_marcus(xyzs, atoms, ϕ, θ, rotate, q_markus, q_scale, basename, labels, color, mode, hydrogens)
 
     end
 else
     one_mol = @manipulate for # Visualization of normal modes
              ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360, q in 1:(length(atoms)*3-6), color in colorant"cadetblue3",
-             mode in ["Legended", "Labeled"]
-        make_plot2( xyzs, atoms, ϕ, θ, rotate, q, color, mode)
+             mode in ["Legended", "Labeled"], hydrogens in H_widget
+        make_plot2( xyzs, atoms, ϕ, θ, rotate, q, color, mode, hydrogens)
 
     end
 end
