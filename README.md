@@ -18,9 +18,11 @@ Run script from terminal specifying path to the .xyz file:
 
 Modification of the shebang line of *one_mol_vis.jl* might be needed. e.g. `#! /usr/bin/env julia`
 
-***Warning: For visualization of normal modes the xyz coordinates cannot be rotated with respect to the coordinates of the frequency calculation!***
+#### Examples of different representation and visualization of vibrational modes:
 
-![one_mol_vis](https://user-images.githubusercontent.com/43886886/148700795-dbea7815-8d8a-49ed-a7b6-941573e8652b.png)
+![example](https://user-images.githubusercontent.com/43886886/208878571-ca1aee93-6704-40cd-81cd-aa646110f85d.png)
+
+
 
 ### Coming soon:
 
