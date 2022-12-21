@@ -18,7 +18,7 @@ Run script from terminal specifying path to the .xyz file:
 
 Modification of the shebang line of *one_mol_vis.jl* might be needed. e.g. `#! /usr/bin/env julia`
 
-#### Examples of different representation and visualization of vibrational modes:
+#### Examples of different representations and visualizations of vibrational modes:
 
 ![example](https://user-images.githubusercontent.com/43886886/208878571-ca1aee93-6704-40cd-81cd-aa646110f85d.png)
 
