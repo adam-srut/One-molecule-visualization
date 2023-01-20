@@ -31,3 +31,5 @@ Modification of the shebang line of *one_mol_vis.jl* might be needed. e.g. `#! /
     - [x] Support for Orca calculations.
 	- [x] Support for ADF calculations (--adf flag reads directly the output file)
     - [x] Support for Turbomole calculations.
+    - [x] Support for MOLDEN format.
+    
