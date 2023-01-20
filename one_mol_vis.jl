@@ -31,6 +31,9 @@ function parse_commandline()
         "--turbomole"
             help = "Path to vib_normal_modes, vibspectrum is expected to be in the same directory"
             arg_type = String
+        "--molden"
+            help = "normal modes in Molden format"
+            arg_type = String
         "--marcusdim"
             help = "Path to marcus-dimension.txt file"
             arg_type = String
@@ -83,6 +86,14 @@ elseif args["marcusdim"] != nothing     # Visualization of Marcus dimension (in 
     adf = false
     orca = false
     turbomole = false
+elseif args["molden"] != nothing
+    norm_mode = true
+    bond_thickness = 2
+    adf = false
+    orca = false
+    turbomole = false
+    molden = true
+    NM_file = args["molden"]
 else    # Plain visualization of molecular geometry
     adf = false
     orca = false
@@ -100,6 +111,7 @@ include("./procedures/ADF_reader.jl")
 include("./procedures/xyz_reader.jl")
 include("./procedures/ORCA-hess_reader.jl")
 include("./procedures/TURBOMOLE_reader.jl")
+include("./procedures/MOLDEN_reader.jl")
 
 # Load dictionaries with atomic types:
 include("./atom_types.jl")
@@ -189,7 +201,7 @@ function make_plot(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, 
             if atoms[i] == "H" && atoms[j] == "H"
                 continue
             end
-            if d < 1.5
+            if d < 1.6
                 sethue("black")
                 setline(bond_thickness)
                 line(points[i], points[j], :stroke)
@@ -245,7 +257,10 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
     point_coors = map( p -> rotM'*p, point_coors)
     dists = map( x -> norm(x-pov), eachrow(xyzs))
     points = map(p -> Point(p...), point_coors)
+    heavy_atoms = ["Ru", "Re", "Fe", "S"]
     # Draw a skelet from bonds:
+    sethue("black")
+    setline(bond_thickness)
     for i in eachindex(points)
         for j in eachindex(points)
             if j >= i
@@ -259,8 +274,8 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
                 continue
             end
             if d < 1.65
-                sethue("black")
-                setline(bond_thickness)
+                line(points[i], points[j], :stroke)
+            elseif (atoms[i] in heavy_atoms || atoms[j] in heavy_atoms) && d < 2.4
                 line(points[i], points[j], :stroke)
             end
         end
@@ -300,7 +315,7 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
     setcolor("azure4")
     freq = @sprintf "%.2f cm⁻¹" freqs[q+6]
     fontsize(14)
-    text(freq, Point(0,-390), halign=:center, valign=:bottom)
+    text(freq, Point(0,-190), halign=:center, valign=:bottom)
     if mode == "Legended"
         draw_legend(atoms)
     end
@@ -323,6 +338,8 @@ else
     elseif turbomole
         C = TURBOMOLE_reader(NM_file, length(atoms)*3)
         freqs = turbofreq_read(freqfile)
+    elseif molden
+        (freqs, C) = molden_reader(NM_file, length(atoms))
     end
 end
 
@@ -351,7 +368,7 @@ elseif args["marcusdim"] != nothing # Visualization of Marcus dimension
     end
 else
     one_mol = @manipulate for # Visualization of normal modes
-             ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360, q in 1:(length(atoms)*3-6), color in colorant"cadetblue3",
+             ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360, q in 1:(length(freqs)-6), color in colorant"cadetblue3",
              mode in ["Legended", "Labeled"], hydrogens in H_widget
         make_plot2( xyzs, atoms, ϕ, θ, rotate, q, color, mode, hydrogens)
 
