@@ -49,7 +49,6 @@ if filename[end-3:end] == ".xyz"
     basename = filename[1:end-4]
 else
     println("File does not have an .xyz ending")
-    println("Please check the file name.")
     basename = "one_mol_vis"
 end
 bond_thickness = args["bond_thickness"]
@@ -80,13 +79,14 @@ elseif args["turbomole"] != nothing # Visualzation of norm. modes. with TURBOMOL
     turbomole = true
     orca = false
     adf = false
-elseif args["marcusdim"] != nothing     # Visualization of Marcus dimension (in house feature)
+elseif args["marcusdim"] != nothing     # Visualization of Marcus dimension (in-house feature)
     norm_mode = true
     bond_thickness = 2
     adf = false
     orca = false
     turbomole = false
-elseif args["molden"] != nothing
+    molden = false
+elseif args["molden"] != nothing    # Visualization of normal modes from MOLDEN format
     norm_mode = true
     bond_thickness = 2
     adf = false
@@ -313,7 +313,7 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
         end
     end
     setcolor("azure4")
-    freq = @sprintf "%.2f cm⁻¹" freqs[q+6]
+    freq = @sprintf "%.4f cm⁻¹" freqs[q+6]
     fontsize(14)
     text(freq, Point(0,-190), halign=:center, valign=:bottom)
     if mode == "Legended"
@@ -330,6 +330,8 @@ end
 # Read input parameters:
 if adf
     xyzs, atoms, freqs, C = ADF_reader(adf_out)
+elseif molden
+    xyzs, atoms, freqs, C = molden_reader(NM_file)
 else
     xyzs, atoms = xyz_reader(xyzfile)
 
@@ -338,8 +340,6 @@ else
     elseif turbomole
         C = TURBOMOLE_reader(NM_file, length(atoms)*3)
         freqs = turbofreq_read(freqfile)
-    elseif molden
-        (freqs, C) = molden_reader(NM_file, length(atoms))
     end
 end
 
