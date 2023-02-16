@@ -104,9 +104,6 @@ include("./procedures/ORCA-hess_reader.jl")
 include("./procedures/TURBOMOLE_reader.jl")
 include("./procedures/MOLDEN_reader.jl")
 
-# Load dictionaries with atomic types:
-include("./atom_types.jl")
-
 # Load essential modules:
 using Interact, Colors, Luxor, Blink
 using LinearAlgebra, Printf
