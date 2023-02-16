@@ -29,5 +29,5 @@ Using a Julia project with precompiled packages can speed up the loading to some
     - [x] Support for Orca calculations.
 	- [x] Support for ADF calculations (--adf flag reads directly the output file)
     - [x] Support for Turbomole calculations.
-    - [x] Support for MOLDEN format. (Expects vibrational modes)
+    - [x] Support for MOLDEN format.
     
