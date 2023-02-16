@@ -48,7 +48,7 @@ filename = split(xyzfile, '/')[end]
 if filename[end-3:end] == ".xyz"
     basename = filename[1:end-4]
 else
-    println("File does not have an .xyz ending")
+    #println("File does not have an .xyz ending")
     basename = "one_mol_vis"
 end
 bond_thickness = args["bond_thickness"]
@@ -65,7 +65,7 @@ elseif args["orca"] != nothing      # Visualzation of norm. modes. with ORCA
     norm_mode = true
     NM_file = args["orca"]
     orca = true
-    adf = false
+    molden = turbomole = adf = false
 elseif args["turbomole"] != nothing # Visualzation of norm. modes. with TURBOMOLE
     bond_thickness = 2
     norm_mode = true
@@ -77,28 +77,19 @@ elseif args["turbomole"] != nothing # Visualzation of norm. modes. with TURBOMOL
         freqfile = "vibspectrum" # File vibspectrum has to be presented in working dir.
     end
     turbomole = true
-    orca = false
-    adf = false
+    molden = adf = orca = false
 elseif args["marcusdim"] != nothing     # Visualization of Marcus dimension (in-house feature)
     norm_mode = true
     bond_thickness = 2
-    adf = false
-    orca = false
-    turbomole = false
-    molden = false
+    orca = turbomole = molden = adf = false
 elseif args["molden"] != nothing    # Visualization of normal modes from MOLDEN format
     norm_mode = true
     bond_thickness = 2
-    adf = false
-    orca = false
-    turbomole = false
+    orca = turbomole = adf = false
     molden = true
     NM_file = args["molden"]
 else    # Plain visualization of molecular geometry
-    adf = false
-    orca = false
-    turbomole = false
-    norm_mode = false
+    molden = orca = turbomole = norm_mode = adf = false
 end
 
 
@@ -119,6 +110,7 @@ include("./atom_types.jl")
 # Load essential modules:
 using Interact, Colors, Luxor, Blink
 using LinearAlgebra, Printf
+using PeriodicTable
 
 #==============================================================================
             Function section:
@@ -150,14 +142,47 @@ function disp_coors(xyzs::Array, Cmat::Matrix{Float64}, q::Int)
     return disp_points
 end
 
+function define_radius(atom::Symbol)
+    #= Define relative radius of an atom for visualization =#
+    mass = elements[atom].atomic_mass.val
+    sign = mass < 12 ? -1 : 1
+    radius = 1 + sign * log(mass)/12
+    if atom == :H
+        radius = 0.8
+    end
+    return radius
+end
+
+function define_color(atom::Symbol)
+    #= Define color of an atom for visualization =#
+    color = elements[atom].cpk_hex
+    if atom == :H
+        color  = "gray90"
+    end
+    return color
+end
+
+function check_heavy_atoms(atoms::Array{String})
+    #= Function return a list of heavy atoms with larger bond distances =#
+    heavy_atoms = String[]
+    for atom in atoms
+        atom_S = Symbol(atom)
+        mass = elements[atom_S].atomic_mass.val
+        if mass > 30
+            push!(heavy_atoms, atom)
+        end
+    end
+    return heavy_atoms
+end
+
 function draw_legend(atoms::Array)
     #= Draw legend in the top-left corner.
         Depends on size of Drawing in fucntions make_plot and make_plot2 =#
     types = unique(atoms)
     Ntypes = length(types)
     for (n, type) in enumerate(types)
-        scale = radii[type]
-        setcolor(colors[type])
+        scale = define_radius(Symbol(type))
+        setcolor( define_color(Symbol(type)) )
         circle(Point(350, -280 + 20*(n-1)), 4*scale, :fillpreserve)
         sethue("black")
         fontface("Sans")
@@ -189,6 +214,9 @@ function make_plot(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, 
     dists = map( x -> norm(x-pov), eachrow(xyzs))
     points = map(p -> Point(p...), point_coors*r/25) #.*(dists*1.5))
     # Draw a skelet from bonds:
+    sethue("black")
+    setline(bond_thickness)
+    heavy_atoms = check_heavy_atoms(atoms)
     for i in eachindex(points)
         for j in eachindex(points)
             if j >= i
@@ -202,8 +230,8 @@ function make_plot(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, 
                 continue
             end
             if d < 1.6
-                sethue("black")
-                setline(bond_thickness)
+                line(points[i], points[j], :stroke)
+            elseif (atoms[i] in heavy_atoms || atoms[j] in heavy_atoms) && d < 2.4
                 line(points[i], points[j], :stroke)
             end
         end
@@ -216,12 +244,12 @@ function make_plot(xyzs::Array, atoms::Array, r::Int, ϕ::Float64, θ::Float64, 
         if name == "H" && noHs
             continue
         end
-        scale = radii[name]
-        setcolor(colors[name])
+        scale = define_radius(Symbol(name))
+        setcolor( define_color(Symbol(name)) )
         if mode == "Legended"
             circle(atom[2],  4*scale, :fillpreserve)
         else
-            circle(atom[2],  (0.8*atom[3])^2/r*scale, :fillpreserve)
+            circle(atom[2],  (12*atom[3])/r*scale, :fillpreserve)
             setline(2)
             sethue("black")
             strokepath()
@@ -257,7 +285,7 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
     point_coors = map( p -> rotM'*p, point_coors)
     dists = map( x -> norm(x-pov), eachrow(xyzs))
     points = map(p -> Point(p...), point_coors)
-    heavy_atoms = ["Ru", "Re", "Fe", "S"]
+    heavy_atoms = check_heavy_atoms(atoms)
     # Draw a skelet from bonds:
     sethue("black")
     setline(bond_thickness)
@@ -300,9 +328,9 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
         if noHs && name == "H"
             continue
         end
-        scale = radii[name]
+        scale = define_radius(Symbol(name))
         if mode == "Legended"
-            setcolor(colors[name])
+            setcolor( define_color(Symbol(name)) )
             circle(atom[2],  4*scale, :fillpreserve)
         else
             setcolor("black")
@@ -313,7 +341,7 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
         end
     end
     setcolor("azure4")
-    freq = @sprintf "%.4f cm⁻¹" freqs[q+6]
+    freq = @sprintf "%.4f" freqs[q+6]
     fontsize(14)
     text(freq, Point(0,-190), halign=:center, valign=:bottom)
     if mode == "Legended"

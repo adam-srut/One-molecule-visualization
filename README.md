@@ -4,19 +4,17 @@ Script for visualization of small molecules.
 
 
 2D plots of moderately size molecules can be easily created from .xyz files.
-Script requires compiled Julia with packages: ArgParse, Interact, Luxor, Colors and Blink.
+Script requires compiled Julia with packages: ArgParse, Interact, Luxor, Colors and Blink and PeriodicTable.
 Run script from terminal specifying path to the .xyz file:
 ```
- $ one_mol_vis.jl /path/to/molecule.xyz 
+ one_mol_vis.jl /path/to/molecule.xyz 
  ```
  Interactive window will appear which allows you to rotate and resize your molecule.
  Molecule plot is automaticaly saved in the working directory every time you change the orientation of the molecule.
- Output format can be specified with option `-o [png, Default: svg]` (pdf format might not work properly).
  Try `$ one_mol_vis.jl --help` to list all the options.
  
-*Check the dictionaries in the atom_types.jl, expand them accordingly to cover all atom types presented in your xyz file.*
-
-Modification of the shebang line of *one_mol_vis.jl* might be needed. e.g. `#! /usr/bin/env julia`
+Modification of the shebang line of *one_mol_vis.jl* might be needed. e.g. `#! /usr/bin/env julia`.
+Using a Julia project with precompiled packeges can speed up loading to some extent.
 
 #### Examples of different representations and visualizations of vibrational modes:
 
@@ -24,12 +22,12 @@ Modification of the shebang line of *one_mol_vis.jl* might be needed. e.g. `#! /
 
 
 
-### Coming soon:
+### Features:
 
-- [ ] More complete support of various atom types.
+- [x] More complete support of various atom types. Whole periodit table is supported through PeriodicTable package.
 - [x] Visualization of normal modes from quantum chemistry calculations. 
     - [x] Support for Orca calculations.
 	- [x] Support for ADF calculations (--adf flag reads directly the output file)
     - [x] Support for Turbomole calculations.
-    - [x] Support for MOLDEN format.
+    - [x] Support for MOLDEN format. (Expects vibrational modes)
     
