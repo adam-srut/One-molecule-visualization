@@ -4,8 +4,8 @@
 function molden_reader(filename::String)
     #= Reads molden input with arbitrary number of normal modes =#
     modes = []
-    freqs = []
-    atoms = Array{String}[]
+    freqs = Float64[]
+    atoms = String[]
     xyzs = []
     NAtoms = 0
     open(filename, "r") do file
@@ -19,7 +19,8 @@ function molden_reader(filename::String)
                         break
                     end
                     atom = xyzline[1]
-                    push!(atoms, [atom])
+                    atom = uppercasefirst(atom)
+                    push!(atoms, atom)
                     NAtoms += 1
                     xyz = parse.(Float64, xyzline[2:end])
                     xyz = xyz/1.8897259886
@@ -34,7 +35,7 @@ function molden_reader(filename::String)
                     freq = parse(Float64, line)
                     append!(freqs, freq)
                 end
-            elseif startswith(line, "vibration")
+            elseif startswith(strip(line), "vibration")
                 mode = Array{Float64}(undef, NAtoms*3)
                 for i_atom in 1:NAtoms
                     line = readline(file)
@@ -51,18 +52,22 @@ function molden_reader(filename::String)
         end
     end
     xyzs = vcat(map(x -> x', xyzs)...)
-    atoms = vcat(atoms...)
     modes = vcat(map(x -> x', modes)...)'
-    C_mat = zeros(6+length(freqs), NAtoms*3)
-    freqs_pad = zeros(6+length(freqs))
-    for (i,mode) in enumerate(eachcol(modes))
-        C_mat[6+i,:] = mode'
+    if freqs[1:6] == zeros(6)
+        C_mat = convert(Matrix, modes')
+    else
+        C_mat = zeros(6+length(freqs), NAtoms*3)
+        freqs_pad = zeros(6+length(freqs))
+        for (i,mode) in enumerate(eachcol(modes))
+            C_mat[6+i,:] = mode'
+        end
+        for (i,freq) in enumerate(freqs)
+            freqs_pad[i+6] = freq
+        end
+        freqs = freqs_pad
     end
-    for (i,freq) in enumerate(freqs)
-        freqs_pad[i+6] = freq
-    end
-    return (xyzs, atoms, freqs_pad, C_mat)
+    return (xyzs, atoms, freqs, C_mat, modes)
 end
 
 
-#(xyzs, atoms, f, C_mat) = molden_reader("/work/Robin-Day/CTI/cti4/lvc/average_traj/pca-modes.molden")
+#(xyzs, atoms, f, C_mat, modes) = molden_reader("/work/Robin-Day/CTI/cti4/lh20t/d4disp/molden.input")
