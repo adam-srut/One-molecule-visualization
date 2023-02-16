@@ -14,7 +14,7 @@ Run script from terminal specifying path to the .xyz file:
  Try `$ one_mol_vis.jl --help` to list all the options.
  
 Modification of the shebang line of *one_mol_vis.jl* might be needed. e.g. `#! /usr/bin/env julia`.
-Using a Julia project with precompiled packeges can speed up loading to some extent.
+Using a Julia project with precompiled packages can speed up the loading to some extent.
 
 #### Examples of different representations and visualizations of vibrational modes:
 
@@ -24,7 +24,7 @@ Using a Julia project with precompiled packeges can speed up loading to some ext
 
 ### Features:
 
-- [x] More complete support of various atom types. Whole periodit table is supported through PeriodicTable package.
+- [x] Whole periodic table is supported through PeriodicTable package.
 - [x] Visualization of normal modes from quantum chemistry calculations. 
     - [x] Support for Orca calculations.
 	- [x] Support for ADF calculations (--adf flag reads directly the output file)
