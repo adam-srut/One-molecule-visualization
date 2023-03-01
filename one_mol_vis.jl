@@ -128,14 +128,14 @@ function create_point(xyz, ϕ::Float64, θ::Float64)
     return sol[1:2]
 end
 
-function disp_coors(xyzs::Array, Cmat::Matrix{Float64}, q::Int)
+function disp_coors(xyzs::Array, Cmat::Matrix{Float64}, q::Int, q_scale::Number)
     #= Displace molecular coordinates in the direction of qth normal mode.
         Normal modes collected as rows of 3N×3N matrix C has to be specified.
         Coordinates are read as N×3 array.
     =#
     n = length(eachrow(xyzs))
     disp_vecs = reshape(Cmat[6+q,:], (3,n))'
-    disp_points = xyzs + disp_vecs*2.2
+    disp_points = xyzs + disp_vecs*2.2*q_scale
     return disp_points
 end
 
@@ -265,7 +265,7 @@ end
 
 
 function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate::Float64, q::Int,
-    color, mode::String, hydrogens::Symbol)
+    q_scale::Number, color, mode::String, hydrogens::Symbol)
     #= Creates a drawing with Luxor package, that is saved as "one_mol_vis.svg".
         Atom types as Array{String} and xyz coordinates Matrix{Float64} has to be supplied.
         Point of View in polar coordinates is also required.
@@ -305,7 +305,7 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
             end
         end
     end
-    disps = disp_coors(xyzs, C, q)*30
+    disps = disp_coors(xyzs, C, q, q_scale)*30
     norms = map( x -> norm(x), eachrow(reshape(C[q+6,:],(3,length(atoms)))') )
     arr_heads = map( p -> create_point(p, ϕ, θ), eachrow(disps))
     arr_heads = map( p -> rotM'*p, arr_heads)
@@ -393,9 +393,9 @@ elseif args["marcusdim"] != nothing # Visualization of Marcus dimension
     end
 else
     one_mol = @manipulate for # Visualization of normal modes
-             ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360, q in 1:(length(freqs)-6), color in colorant"cadetblue3",
-             mode in ["Legended", "Labeled"], hydrogens in H_widget
-        make_plot2( xyzs, atoms, ϕ, θ, rotate, q, color, mode, hydrogens)
+             ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360, q in 1:(length(freqs)-6), q_scale in 0.8:0.05:2.0,
+             color in colorant"cadetblue3", mode in ["Legended", "Labeled"], hydrogens in H_widget
+        make_plot2( xyzs, atoms, ϕ, θ, rotate, q, q_scale, color, mode, hydrogens)
 
     end
 end

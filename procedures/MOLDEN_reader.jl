@@ -2,7 +2,9 @@
 
 
 function molden_reader(filename::String)
-    #= Reads molden input with arbitrary number of normal modes =#
+    #= Reads molden input with arbitrary number of normal modes 
+    TODO: Recognize mass-weighting from tm2molden script.
+    =#
     modes = []
     freqs = Float64[]
     atoms = String[]
@@ -52,8 +54,22 @@ function molden_reader(filename::String)
         end
     end
     xyzs = vcat(map(x -> x', xyzs)...)
+    cog = sum(eachrow(xyzs))/NAtoms 
+    xyzs = xyzs .- cog' # Shift coordinates to the geometric centre
     modes = vcat(map(x -> x', modes)...)'
-    if freqs[1:6] == zeros(6)
+    # TODO: fix the following code -- decide when and how to pad
+    # Optional: discard zero freqs in other interfaces
+    if length(freqs) < 6
+        C_mat = zeros(6+length(freqs), NAtoms*3)
+        freqs_pad = zeros(6+length(freqs))
+        for (i,mode) in enumerate(eachcol(modes))
+            C_mat[6+i,:] = mode'
+        end
+        for (i,freq) in enumerate(freqs)
+            freqs_pad[i+6] = freq
+        end
+        freqs = freqs_pad
+    elseif freqs[1:6] == zeros(6)
         C_mat = convert(Matrix, modes')
     else
         C_mat = zeros(6+length(freqs), NAtoms*3)
