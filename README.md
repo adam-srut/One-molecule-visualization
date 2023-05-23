@@ -13,8 +13,6 @@ Run script from terminal specifying path to the .xyz file:
  Molecule plot is automaticaly saved in the working directory every time you change the orientation of the molecule.
  Try `$ one_mol_vis.jl --help` to list all the options.
  
-Modification of the shebang line of *one_mol_vis.jl* might be needed. e.g. `#! /usr/bin/env julia`.
-Using a Julia project with precompiled packages can speed up the loading to some extent.
 
 #### Examples of different representations and visualizations of vibrational modes:
 

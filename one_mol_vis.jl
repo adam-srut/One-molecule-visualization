@@ -1,5 +1,4 @@
-#! /usr/bin/env -S julia --project=one_mol_vis -J/home/adam/programs/one_mol_vis-dev/one_mol_vis/one_mol_vis.so
-
+#! /usr/bin/env julia 
 
 
 #==============================================================================
@@ -315,7 +314,7 @@ function make_plot2(xyzs::Array, atoms::Array, ϕ::Float64, θ::Float64, rotate:
             continue
         end
         setcolor(color)
-        arrow(p, f, arrowheadlength=22*cnorm, linewidth=2.8)
+        arrow(p, f, arrowheadlength=28*cnorm, linewidth=2.8)
     end
     # Order atoms by their distatce to pov and plot as labeled circles
     to_plot = map( (atom, point, dist) -> (atom, point, dist), atoms, points, dists)

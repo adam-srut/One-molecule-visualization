@@ -82,8 +82,8 @@ function molden_reader(filename::String)
         end
         freqs = freqs_pad
     end
-    return (xyzs, atoms, freqs, C_mat, modes)
+    return (xyzs, atoms, freqs, C_mat)
 end
 
 
-#(xyzs, atoms, f, C_mat, modes) = molden_reader("/work/Robin-Day/CTI/cti4/lh20t/d4disp/molden.input")
+#(xyzs, atoms, f, C_mat) = molden_reader("/work/Robin-Day/CTI/cti4/lh20t/d4disp/molden.input")
