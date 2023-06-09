@@ -2,9 +2,8 @@
 
 
 function molden_reader(filename::String)
-    #= Reads molden input with arbitrary number of normal modes 
-    TODO: Recognize mass-weighting from tm2molden script.
-    =#
+    #= Reads molden input with arbitrary number of normal modes =#
+    Ang_to_Bohr = 1.8897259886
     modes = []
     freqs = Float64[]
     atoms = String[]
@@ -25,7 +24,7 @@ function molden_reader(filename::String)
                     push!(atoms, atom)
                     NAtoms += 1
                     xyz = parse.(Float64, xyzline[2:end])
-                    xyz = xyz/1.8897259886
+                    xyz = xyz/Ang_to_Bohr
                     push!(xyzs, xyz)
                 end
             elseif startswith(line, "[FREQ]")
@@ -42,7 +41,7 @@ function molden_reader(filename::String)
                 for i_atom in 1:NAtoms
                     line = readline(file)
                     xyz = parse.(Float64, split(line))
-                    xyz = xyz/1.8897259886
+                    xyz = xyz/Ang_to_Bohr
                     mode[ i_atom*3-2 : i_atom*3 ] = xyz
                 end
                 append!(modes, [mode])
@@ -57,30 +56,20 @@ function molden_reader(filename::String)
     cog = sum(eachrow(xyzs))/NAtoms 
     xyzs = xyzs .- cog' # Shift coordinates to the geometric centre
     modes = vcat(map(x -> x', modes)...)'
-    # TODO: fix the following code -- decide when and how to pad
-    # Optional: discard zero freqs in other interfaces
-    if length(freqs) < 6
-        C_mat = zeros(6+length(freqs), NAtoms*3)
-        freqs_pad = zeros(6+length(freqs))
-        for (i,mode) in enumerate(eachcol(modes))
-            C_mat[6+i,:] = mode'
+    # Remove padding with zero frequencies if present:
+    if length(freqs) > 6
+        if freqs[1:6] == zeros(6)
+            freqs = freqs[7:end]
+            C_mat = zeros(length(freqs), NAtoms*3)
+            for (i,mode) in enumerate(eachcol(modes))
+                if i <= 6
+                    continue
+                end
+                C_mat[i-6,:] = mode'
+           end
         end
-        for (i,freq) in enumerate(freqs)
-            freqs_pad[i+6] = freq
-        end
-        freqs = freqs_pad
-    elseif freqs[1:6] == zeros(6)
-        C_mat = convert(Matrix, modes')
     else
-        C_mat = zeros(6+length(freqs), NAtoms*3)
-        freqs_pad = zeros(6+length(freqs))
-        for (i,mode) in enumerate(eachcol(modes))
-            C_mat[6+i,:] = mode'
-        end
-        for (i,freq) in enumerate(freqs)
-            freqs_pad[i+6] = freq
-        end
-        freqs = freqs_pad
+        C_mat = convert(Matrix, modes')
     end
     return (xyzs, atoms, freqs, C_mat)
 end

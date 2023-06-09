@@ -24,8 +24,7 @@ Run script from terminal specifying path to the .xyz file:
 
 - [x] Whole periodic table is supported through PeriodicTable package.
 - [x] Visualization of normal modes from quantum chemistry calculations. 
-    - [x] Support for Orca calculations.
-	- [x] Support for ADF calculations (--adf flag reads directly the output file)
-    - [x] Support for Turbomole calculations.
+    - [ ] Support for Orca calculations.
+    - [x] Support for Turbomole calculations, now through Molden format (use `tm2molden`).
     - [x] Support for MOLDEN format.
     
