@@ -5,10 +5,10 @@
 ==============================================================================#
 
 # Load file readers:
-include("./procedures/ADF_reader.jl")
+#include("./procedures/ADF_reader.jl")
 include("./procedures/xyz_reader.jl")
-include("./procedures/ORCA-hess_reader.jl")
-include("./procedures/TURBOMOLE_reader.jl")
+#include("./procedures/ORCA-hess_reader.jl")
+#include("./procedures/TURBOMOLE_reader.jl")
 include("./procedures/MOLDEN_reader.jl")
 
 # Load essential modules:
@@ -28,15 +28,6 @@ function parse_commandline()
             help = "Path to the .xyz file"
             arg_type = String
             #required = true
-        "--orca"
-            help = "Path to orca.hess file."
-            arg_type = String
-        "--adf"
-            help = "ADF outfile with freq. calc. (no .xyz file is needed)"
-            arg_type = String
-        "--turbomole"
-            help = "Path to vib_normal_modes, vibspectrum is expected to be in the same directory"
-            arg_type = String
         "--molden"
             help = "normal modes in Molden format"
             arg_type = String
@@ -55,16 +46,16 @@ args = parse_commandline()
 
 mutable struct Molecule
     #= Molecule constructor with all necessary properties =#
-    xyzs::Array{Float64}
-    atoms::Array{String}
-    masses
-    colors
-    radii
-    norm_modes
-    freqs
-    q_color
-    q_num::Number
-    mw::Bool
+    xyzs::Array{Float64}        # N×3 array of xyz coordinates
+    atoms::Array{String}        # N×1 array of atomic symbols
+    masses                      # N×1 array of atomic masses (created automatically)
+    colors                      # N×1 array of atomic colors in HEX format (created automatically)
+    radii                       # N×1 array of atomic radii (created automatically)
+    norm_modes                  # false of M×N array with M normal modes
+    freqs                       # M×1 array of frequencies
+    q_color                     # Arrows color for visualization
+    q_num::Number               # visualize Mth normal mode
+    mw::Bool                    # Add mass-weghting to normal modes?
 end
 
 function Molecule(;
@@ -173,7 +164,7 @@ function make_plot(molecule::Molecule, r::Int, ϕ::Float64, θ::Float64, rotate:
     point_coors = map( p -> create_point(p*30, ϕ, θ), eachrow(molecule.xyzs))
     point_coors = map( p -> rotM'*p, point_coors)
     dists = map( x -> norm(x-pov), eachrow(molecule.xyzs))
-    points = map(p -> Point(p...), point_coors*r/25) #.*(dists*1.5))
+    points = map(p -> Point(p...), point_coors*r/25) 
     
     # Draw a skelet from bonds:
     sethue("black")
@@ -198,14 +189,14 @@ function make_plot(molecule::Molecule, r::Int, ϕ::Float64, θ::Float64, rotate:
             end
         end
     end
+
     # Visualization of normal modes:
-    if typeof(molecule.norm_modes) != Bool
+    if !(molecule.norm_modes isa Bool)
         q = molecule.q_num
         C = molecule.norm_modes
         if molecule.mw # Add mass-weighting?
             M = vcat( [[m,m,m] for m in molecule.masses ]... )
-            M = sqrt.(M)
-            M = diagm(M)
+            M = diagm(sqrt.(M))
             C = C * M
             map!( x -> x/norm(x), eachrow(C), eachrow(C))
         end
@@ -238,7 +229,7 @@ function make_plot(molecule::Molecule, r::Int, ϕ::Float64, θ::Float64, rotate:
         setcolor( molecule.colors[i] )
         if mode == "Legended"
             circle(points[i],  4*scale, :fillpreserve)
-        elseif typeof(molecule.norm_modes) != Bool
+        elseif !(molecule.norm_modes isa Bool)
             setcolor("black")
             circle(points[i],  4*scale, :fill)
             fontsize(12)
@@ -263,7 +254,7 @@ function make_plot(molecule::Molecule, r::Int, ϕ::Float64, θ::Float64, rotate:
 end
 
 #==============================================================================
-            Main body of the programme:
+            Main body of the program:
 ==============================================================================#
 
 # Prepare molecule:
@@ -273,13 +264,15 @@ if args["xyz"] != nothing
 elseif args["molden"] != nothing
     (xyzs, atoms, freqs, C) = molden_reader(args["molden"])
     molecule = Molecule(xyzs=xyzs, atoms=atoms, norm_modes=C, freqs=freqs)
+else
+    error("No arguments provided... Bailing out!\n\tTry `one_mol_vis.jl --help` for more info.")
 end
 
 # Create widgets:
 H_widget = widget([:on, :off], label="Show hydrogens:")
 
 # Create an interactive object:
-if molecule.norm_modes != Bool # Visualization of many normal modes
+if !(molecule.norm_modes isa Bool) # Visualization of many normal modes
     if length(molecule.freqs) > 1
         one_mol = @manipulate for r in 10:40, ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360,
             mode in ["Legended", "Labeled"], hydrogens in H_widget, q in 1:length(molecule.freqs),
@@ -292,10 +285,11 @@ if molecule.norm_modes != Bool # Visualization of many normal modes
         end
     else # Visualization of one vibrational motion (e.g. Marcus dimension => in-house feature)
         one_mol = @manipulate for r in 10:40, ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360,
-            mode in ["Legended", "Labeled"], hydrogens in H_widget, color in colorant"darkorange1"
+            mode in ["Legended", "Labeled"], hydrogens in H_widget, color in colorant"darkorange1",
+            q_scale in 0.8:0.05:1.5
             
             molecule.q_color = color
-            make_plot( molecule, r, ϕ, θ, rotate, mode, hydrogens )
+            make_plot( molecule, r, ϕ, θ, rotate, mode, hydrogens; q_scale=q_scale )
         end
     end
 else # Visualization of a plain molecule
@@ -305,7 +299,6 @@ else # Visualization of a plain molecule
             make_plot( molecule, r, ϕ, θ, rotate, mode, hydrogens )
     end
 end
-
 
 # Open a window with visualization:
 w = Window()
