@@ -99,7 +99,7 @@ function disp_coors(xyzs::Array, Cmat::Matrix{Float64}, q, q_scale::Number)
         Coordinates are read as N×3 array.
     =#
     n = length(eachrow(xyzs))
-    disp_vecs = reshape(Cmat[q,:], (3,n))'
+    disp_vecs = reshape(Cmat[q,:]/norm(Cmat[q,:]), (3,n))'
     disp_points = xyzs + disp_vecs*2.2*q_scale
     return disp_points
 end
@@ -211,7 +211,7 @@ function make_plot(molecule::Molecule, r::Int, ϕ::Float64, θ::Float64, rotate:
                 continue
             end
             setcolor(molecule.q_color)
-            arrow(p, f, arrowheadlength=22*cnorm, linewidth=2.8)
+            arrow(p, f, arrowheadlength=16*sqrt(cnorm), linewidth=3)
         end
         setcolor("azure4")
         freq = @sprintf "%.4f" freqs[q]
