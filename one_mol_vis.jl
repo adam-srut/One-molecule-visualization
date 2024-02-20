@@ -211,7 +211,7 @@ function make_plot(molecule::Molecule, r::Int, ϕ::Float64, θ::Float64, rotate:
                 continue
             end
             setcolor(molecule.q_color)
-            arrow(p, f, arrowheadlength=28*cnorm, linewidth=2.8)
+            arrow(p, f, arrowheadlength=22*cnorm, linewidth=2.8)
         end
         setcolor("azure4")
         freq = @sprintf "%.4f" freqs[q]
@@ -225,18 +225,17 @@ function make_plot(molecule::Molecule, r::Int, ϕ::Float64, θ::Float64, rotate:
         if molecule.atoms[i] == "H" && noHs
             continue
         end
-        scale = molecule.radii[i]
         setcolor( molecule.colors[i] )
         if mode == "Legended"
-            circle(points[i],  4*scale, :fillpreserve)
+            circle(points[i],  4*molecule.radii[i], :fillpreserve)
         elseif !(molecule.norm_modes isa Bool)
             setcolor("black")
-            circle(points[i],  4*scale, :fill)
+            circle(points[i],  4*molecule.radii[i], :fill)
             fontsize(12)
             fontface("Sans")
             label(molecule.atoms[i], :NE, points[i], offset=10)
         else
-            circle(points[i],  (12*dists[i])/r*scale, :fillpreserve)
+            circle(points[i],  (12*dists[i])/r*molecule.radii[i], :fillpreserve)
             setline(2)
             sethue("black")
             strokepath()
@@ -270,14 +269,18 @@ end
 
 # Create widgets:
 H_widget = widget([:on, :off], label="Show hydrogens:")
+rev_widget = widget([true, false], label="Revert direction:")
 
 # Create an interactive object:
 if !(molecule.norm_modes isa Bool) # Visualization of many normal modes
     if length(molecule.freqs) > 1
         one_mol = @manipulate for r in 10:40, ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360,
             mode in ["Legended", "Labeled"], hydrogens in H_widget, q in 1:length(molecule.freqs),
-            color in colorant"darkorange1", q_scale in 0.8:0.05:1.5
+            revmode in rev_widget, color in colorant"darkorange1", q_scale in 0.8:0.05:1.5
             
+            if revmode
+                q_scale = -1*q_scale
+            end
             molecule.q_color = color
             molecule.q_num = q
             molecule.mw = args["nomw"]
@@ -286,8 +289,11 @@ if !(molecule.norm_modes isa Bool) # Visualization of many normal modes
     else # Visualization of one vibrational motion (e.g. Marcus dimension => in-house feature)
         one_mol = @manipulate for r in 10:40, ϕ in 0:0.1:360, θ in 0:0.1:360, rotate in 0:0.1:360,
             mode in ["Legended", "Labeled"], hydrogens in H_widget, color in colorant"darkorange1",
-            q_scale in 0.8:0.05:1.5
+            revmode in rev_widget, q_scale in 0.6:0.05:1.5
             
+            if revmode
+                q_scale = -1*q_scale
+            end
             molecule.q_color = color
             make_plot( molecule, r, ϕ, θ, rotate, mode, hydrogens; q_scale=q_scale )
         end

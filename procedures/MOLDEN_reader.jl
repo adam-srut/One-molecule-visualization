@@ -67,6 +67,8 @@ function molden_reader(filename::String)
                 end
                 C_mat[i-6,:] = mode'
            end
+        else
+            C_mat = convert(Matrix, modes')
         end
     else
         C_mat = convert(Matrix, modes')
